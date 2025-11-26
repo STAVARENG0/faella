@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jaella Crafts - Yarn Shop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rosa-principal: #ff2b7a;
+      --rosa-escuro: #e0256c;
+      --rosa-claro: #ffe3f0;
+      --verde-botao: #1fae3b;
+      --cinza-texto: #555;
+      --cinza-claro: #f8f8f8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #fff;
+      color: var(--cinza-texto);
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Top bar */
+    .top-bar {
+      background: var(--rosa-principal);
+      color: #fff;
+      font-size: 0.85rem;
+      padding: 6px 10px;
+    }
+
+    .top-bar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .header-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px 25px;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    
+    
+    .logo-circle {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: var(--rosa-principal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Risco mais fino, delicado, no mesmo tom de rosa */
+      border: 2px solid var(--rosa-principal);
+      /* Efeito neon mais suave usando o mesmo tom de rosa */
+      box-shadow:
+        0 0 6px #ff2b7a,
+        0 0 14px #ff2b7a,
+        0 0 22px #ff2b7a;
+    }
+
+    .logo-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+      background: #fff0;
+    }
+
+    
+    .search-container {
+      flex: 1;
+      display: flex;
+      max-width: 540px;
+      width: 100%;
+      height: 44px;
+      border-radius: 25px;
+      overflow: hidden;
+      border: 1px solid #eee;
+      background: #fff;
+      /* Afastar um pouco a barra de pesquisa da logo */
+      margin-left: 12px;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      padding: 0 18px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .search-btn {
+      width: 56px;
+      border: none;
+      background: var(--rosa-principal);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background 0.2s ease;
+    }
+
+    .search-btn:hover {
+      background: var(--rosa-escuro);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .cart {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      cursor: pointer;
+    }
+
+    .cart-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px dashed var(--rosa-principal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--rosa-principal);
+    }
+
+    .social {
+      display: flex;
+      gap: 0.4rem;
+      font-size: 1.2rem;
+      color: var(--rosa-principal);
+      cursor: pointer;
+    }
+
+    /* Navigation */
+    nav {
+      border-top: 1px solid #f5f5f5;
+      border-bottom: 1px solid #f5f5f5;
+      background: #fff;
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2.5rem;
+      padding: 10px 10px;
+      font-size: 0.9rem;
+    }
+
+    .nav-link {
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      position: relative;
+      padding-bottom: 3px;
+    }
+
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 2px;
+      background: var(--rosa-principal);
+      transition: width 0.2s ease;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Hero */
+    .hero {
+      background: var(--rosa-principal);
+      color: #fff;
+      padding: 40px 10px 60px;
+    }
+
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-left {
+      max-width: 450px;
+    }
+
+    .hero-label {
+      display: inline-block;
+      background: #fff;
+      color: var(--rosa-principal);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-size: 2.6rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      max-width: 320px;
+      margin-bottom: 20px;
+    }
+
+    .hero-badge {
+      font-weight: 700;
+      font-size: 1.4rem;
+      text-transform: uppercase;
+    }
+
+    .hero-right {
+      flex: 1;
+      min-width: 260px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .hero-card {
+      background: #fff;
+      color: var(--rosa-principal);
+      padding: 30px 40px;
+      border-radius: 30px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+
+    .hero-card-title {
+      font-size: 2.2rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .hero-card-sub {
+      text-transform: uppercase;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .hero-card-date {
+      margin-top: 14px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    /* Main / products */
+    main {
+      max-width: 1180px;
+      margin: 25px auto 60px;
+      padding: 0 10px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 25px 0 15px;
+      text-align: center;
+      position: relative;
+    }
+
+    .section-title::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -6px;
+      width: 70px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--rosa-principal);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .product-card {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .product-card:hover {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transform: translateY(-4px);
+    }
+
+    .product-image {
+      background: #fff;
+      padding: 18px 10px 10px;
+      text-align: center;
+    }
+
+    .product-image img {
+      max-width: 120px;
+      height: auto;
+    }
+
+    .product-body {
+      padding: 10px 12px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .product-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      background: var(--rosa-claro);
+      color: var(--rosa-principal);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .product-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      min-height: 38px;
+    }
+
+    .product-brand {
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    .product-price {
+      margin-top: 6px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--rosa-principal);
+    }
+
+    .product-price span {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #777;
+    }
+
+    .product-installments {
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    .product-footer {
+      padding: 10px 12px 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-buy {
+      background: var(--verde-botao);
+      color: #fff;
+      border: none;
+      padding: 8px 26px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn-buy:hover {
+      background: #18922f;
+      transform: translateY(-1px);
+    }
+
+    /* Newsletter */
+    .newsletter {
+      background: var(--rosa-principal);
+      padding: 28px 10px;
+      color: #fff;
+    }
+
+    .newsletter-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .newsletter-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .newsletter-sub {
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .newsletter-form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .newsletter-input {
+      min-width: 220px;
+      max-width: 420px;
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 10px 16px;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .newsletter-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 10px 22px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      background: #fff;
+      color: var(--rosa-principal);
+    }
+
+    /* Footer */
+    footer {
+      background: #fff;
+      border-top: 1px solid #f1f1f1;
+      padding: 20px 10px 30px;
+    }
+
+    .footer-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 24px;
+      font-size: 0.85rem;
+    }
+
+    .footer-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      color: var(--rosa-principal);
+    }
+
+    .footer-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .footer-bottom {
+      max-width: 1180px;
+      margin: 18px auto 0;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #999;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .top-bar-inner {
+        flex-direction: column;
+      }
+
+      .header-inner {
+        padding-top: 18px;
+      }
+
+      .header-right {
+        justify-content: center;
+      }
+
+      .nav-inner {
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .hero-inner {
+        text-align: center;
+      }
+
+      .hero-left {
+        max-width: 100%;
+      }
+
+      .hero-sub {
+        margin: 0 auto 16px;
+      }
+
+      .hero-right {
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top info bar -->
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span>Ireland's most loved yarn shop</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="logo-circle">
+        <!-- Replace "logo.png" with your actual logo file name/path -->
+        <img src="logo.png" alt="Jaella Crafts logo">
+      </div>
+
+      <form class="search-container">
+        <input class="search-input" type="text" placeholder="Search for dolls, bears, yarn and more..." />
+        <button class="search-btn" type="submit">🔍</button>
+      </form>
+
+      <div class="header-right">
+        <div class="cart">
+          <div class="cart-icon">🛒</div>
+          <div>
+            <div style="font-size:0.8rem;">My cart</div>
+            <strong style="font-size:0.85rem;">0 items</strong>
+          </div>
+        </div>
+        <div class="social">
+          <span>●</span>
+          <span>●</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-link" href="#">Dolls</a>
+      <a class="nav-link" href="#">Bears</a>
+      <a class="nav-link" href="#">Keychains</a>
+      <a class="nav-link" href="#">Promotions</a>
+      <a class="nav-link" href="#">Weekly highlight</a>
+      <a class="nav-link" href="#">Animals</a>
+    </div>
+  </nav>
+
+  <!-- Hero banner -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-label">Pink Friday Jaella Crafts</div>
+        <h1 class="hero-title">One new offer every day!</h1>
+        <p class="hero-sub">Special discounts on yarns, notions and accessories so you can crochet all month long.</p>
+        <p class="hero-badge">Enjoy until 28/11</p>
+      </div>
+
+      <div class="hero-right">
+        <div class="hero-card">
+          <div class="hero-card-title">Pink Friday</div>
+          <div class="hero-card-sub">Unmissable offers across the shop</div>
+          <div class="hero-card-date">Until 28/11</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products -->
+  <main>
+    <h2 class="section-title">Promotions</h2>
+
+    <div class="products-grid">
+      <!-- Product 1 -->
+      <article class="product-card">
+        <div class="product-image">
+          <img src="https://via.placeholder.com/160x160?text=Pink+Yarn" alt="Pink crochet yarn">
+        </div>
+        <div class="product-body">
+          <span class="product-badge">Deal of the day</span>
+          <h3 class="product-name">Barroco Maxcolor Crochet Yarn 400g</h3>
+          <span class="product-brand">Círculo</span>
+          <p class="product-price">€19.90 <span>when paying by card</span></p>
+          <p class="product-installments">Or 3x of €7.10</p>
+        </div>
+        <div class="product-footer">
+          <button class="btn-buy">Buy now</button>
+        </div>
+      </article>
+
+      <!-- Product 2 -->
+      <article class="product-card">
+        <div class="product-image">
+          <img src="https://via.placeholder.com/160x160?text=Cord" alt="Green cord yarn">
+        </div>
+        <div class="product-body">
+          <span class="product-badge">Promotion</span>
+          <h3 class="product-name">6-ply Cotton Cord 610m</h3>
+          <span class="product-brand">Jaella Crafts</span>
+          <p class="product-price">€15.90 <span>with instant payment</span></p>
+          <p class="product-installments">Or 2x of €8.45</p>
+        </div>
+        <div class="product-footer">
+          <button class="btn-buy">Buy now</button>
+        </div>
+      </article>
+
+      <!-- Product 3 -->
+      <article class="product-card">
+        <div class="product-image">
+          <img src="https://via.placeholder.com/160x160?text=Yarn+Cone" alt="Pink yarn cone">
+        </div>
+        <div class="product-body">
+          <span class="product-badge">Buy 3 pay 2</span>
+          <h3 class="product-name">Knitting Yarn Cone 1kg</h3>
+          <span class="product-brand">Premium</span>
+          <p class="product-price">€32.90 <span>on your card</span></p>
+          <p class="product-installments">Or 4x of €8.22</p>
+        </div>
+        <div class="product-footer">
+          <button class="btn-buy">Buy now</button>
+        </div>
+      </article>
+
+      <!-- Product 4 -->
+      <article class="product-card">
+        <div class="product-image">
+          <img src="https://via.placeholder.com/160x160?text=Hook+Set" alt="Crochet hook set">
+        </div>
+        <div class="product-body">
+          <span class="product-badge">New in</span>
+          <h3 class="product-name">Set of 5 Crochet Hooks with soft grip</h3>
+          <span class="product-brand">Soft Crochet</span>
+          <p class="product-price">€28.50 <span>on your card</span></p>
+          <p class="product-installments">Or 3x of €9.50</p>
+        </div>
+        <div class="product-footer">
+          <button class="btn-buy">Buy now</button>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <!-- Newsletter -->
+  <section class="newsletter">
+    <!-- Faixa rosa vazia, sem textos nem formulário -->
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <!-- Rodapé sem opções/texto, apenas estrutura e cores do layout -->
+    </div>
+
+    <div class="footer-bottom">
+      <!-- Faixa inferior do rodapé sem texto -->
+    </div>
+  </footer>
+</body>
+</html>
