@@ -332,13 +332,13 @@
 
     .products-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
     }
 
     .product-card {
       border: 1px solid #eee;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -353,17 +353,17 @@
 
     .product-image {
       background: #fff;
-      padding: 18px 10px 10px;
+      padding: 12px 8px 8px;
       text-align: center;
     }
 
     .product-image img {
-      max-width: 120px;
+      max-width: 90px;
       height: auto;
     }
 
     .product-body {
-      padding: 10px 12px 12px;
+      padding: 8px 10px 10px;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -412,7 +412,7 @@
     }
 
     .product-footer {
-      padding: 10px 12px 12px;
+      padding: 8px 10px 10px;
       display: flex;
       justify-content: center;
     }
@@ -530,6 +530,24 @@
       color: #999;
     }
 
+    @media (max-width: 1024px) {
+      .products-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 480px) {
+      .products-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .top-bar-inner {
@@ -638,8 +656,6 @@
 
   <!-- Products -->
   <main>
-    <h2 class="section-title">Promotions</h2>
-
     <div class="products-grid" id="productsGrid"></div>
   </main>
 
