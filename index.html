@@ -640,12 +640,7 @@
   <main>
     <h2 class="section-title">Promotions</h2>
 
-    <div class="products-grid">
-      <!-- Product 1 -->
-      <article class="product-card">
-        <div class="product-image">
-          <img src="https://via.placeholder.com/160x160?text=Pink+Yarn" alt="Pink crochet yarn">
-        </div>
+    <div class="products-grid" id="productsGrid"></div>
         <div class="product-body">
           <span class="product-badge">Deal of the day</span>
           <h3 class="product-name">Barroco Maxcolor Crochet Yarn 400g</h3>
@@ -726,5 +721,67 @@
       <!-- Faixa inferior do rodapé sem texto -->
     </div>
   </footer>
+
+  <script>
+    (function() {
+      const grid = document.getElementById('productsGrid');
+      if (!grid) return;
+
+      function formatPrice(value) {
+        const num = Number(value || 0);
+        return num.toLocaleString('en-IE', { style: 'currency', currency: 'EUR' });
+      }
+
+      fetch('products.json')
+        .then(function(res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(products) {
+          if (!Array.isArray(products)) products = [];
+          grid.innerHTML = '';
+
+          products
+            .filter(function(p) { return !p.status || p.status === 'published'; })
+            .forEach(function(p) {
+              const article = document.createElement('article');
+              article.className = 'product-card';
+
+              const imageUrl = p.image || (Array.isArray(p.gallery) && p.gallery[0]) || 'https://via.placeholder.com/160x160?text=Product';
+              const title = p.title || '';
+              const category = p.category || 'Promotion';
+              const brand = 'Faella Crafts';
+              const priceText = formatPrice(p.price);
+              const description = p.description || '';
+
+              article.innerHTML = [
+                '<div class="product-image">',
+                  '<img src="' + imageUrl + '" alt="' + title.replace(/"/g, '&quot;') + '">',
+                '</div>',
+                '<div class="product-body">',
+                  '<span class="product-badge">' + category + '</span>',
+                  '<h3 class="product-name">' + title + '</h3>',
+                  '<span class="product-brand">' + brand + '</span>',
+                  '<p class="product-price">' + priceText + ' <span></span></p>',
+                  description ? '<p class="product-installments">' + description + '</p>' : '',
+                '</div>',
+                '<div class="product-footer">',
+                  '<button class="btn-buy">Buy now</button>',
+                '</div>'
+              ].join('');
+
+              grid.appendChild(article);
+            });
+
+          if (!grid.children.length) {
+            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px 0;">No products found.</p>';
+          }
+        })
+        .catch(function(err) {
+          console.error('Error loading products.json:', err);
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px 0;">Could not load products.</p>';
+        });
+    })();
+  </script>
 </body>
 </html>
