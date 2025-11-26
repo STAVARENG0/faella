@@ -10,5 +10,17 @@
     "gallery": [],
     "createdAt": 1764162224009,
     "status": "published"
+  },
+  {
+    "id": "1764162348009",
+    "title": "shorte",
+    "price": 44,
+    "description": "dfgdgdfgd",
+    "category": "Bears",
+    "stock": 2,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764162348009/Gemini_Generated_Image_n7k61sn7k61sn7k6.png",
+    "gallery": [],
+    "createdAt": 1764162349418,
+    "status": "published"
   }
 ]
