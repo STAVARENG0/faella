@@ -34,5 +34,17 @@
     "gallery": [],
     "createdAt": 1764162879879,
     "status": "published"
+  },
+  {
+    "id": "1764163009165",
+    "title": "top ",
+    "price": 88,
+    "description": "sasaasasas",
+    "category": "Promotions",
+    "stock": 3,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764163009165/Gemini_Generated_Image_athp0tathp0tathp.png",
+    "gallery": [],
+    "createdAt": 1764163010422,
+    "status": "published"
   }
 ]
