@@ -281,6 +281,18 @@ footer{
 const CART_KEYS_ORDER = ['vw_cart','hs_cart','cart','v_cart','cartItems','cart_items','cartData'];
 const FULFILMENT_KEY = 'fulfilment_mode'; // 'delivery' | 'pickup'
 
+function readCartFromQuery(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('cart');
+    if(!raw) return [];
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data : [];
+  }catch(e){
+    return [];
+  }
+}
+
 // Year
 document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -299,6 +311,8 @@ function readCart(){
     const v = readJSON(k);
     if(Array.isArray(v) && v.length) return v;
   }
+  const fromQuery = readCartFromQuery();
+  if(fromQuery.length) return fromQuery;
   return [];
 }
 

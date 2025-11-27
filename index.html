@@ -1097,7 +1097,10 @@
             alert('Your cart is empty.');
             return;
           }
-          window.location.href = 'Checkout.html';
+          // garante que o carrinho está salvo e também envia os itens pela URL
+          persistCart();
+          const payload = encodeURIComponent(JSON.stringify(cartState.items));
+          window.location.href = 'Checkout.html?cart=' + payload;
         });
       }
 
