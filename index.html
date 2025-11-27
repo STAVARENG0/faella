@@ -712,7 +712,15 @@
         return num.toLocaleString('en-IE', { style: 'currency', currency: 'EUR' });
       }
 
-      fetch('products.json')
+      const productsUrl = 'ProductJSON?t=' + Date.now();
+      fetch(productsUrl, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
         .then(function(res) {
           if (!res.ok) throw new Error('HTTP ' + res.status);
           return res.json();
@@ -758,8 +766,8 @@
           }
         })
         .catch(function(err) {
-          console.error('Error loading products.json:', err);
-          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px 0;">Could not load products.</p>';
+          console.error('Error loading ProductJSON:', err);
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px 0;">Could not load products from ProductJSON.</p>';
         });
     })();
   </script>
