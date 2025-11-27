@@ -34,5 +34,17 @@
     "gallery": [],
     "createdAt": 1764251815414,
     "status": "published"
+  },
+  {
+    "id": "1764252085871",
+    "title": "Ursinho",
+    "price": 40,
+    "description": "Urso fofo ",
+    "category": "Bears",
+    "stock": 4,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764252085871/Gemini_Generated_Image_kgkvf2kgkvf2kgkv.png",
+    "gallery": [],
+    "createdAt": 1764252087220,
+    "status": "published"
   }
 ]
