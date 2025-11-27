@@ -22,5 +22,17 @@
     "gallery": [],
     "createdAt": 1764249949798,
     "status": "published"
+  },
+  {
+    "id": "1764251792845",
+    "title": "Touca vemelha ",
+    "price": 15,
+    "description": "touca lindinha",
+    "category": "Promotions",
+    "stock": 1,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764251792845/Gemini_Generated_Image_vs35qdvs35qdvs35.png",
+    "gallery": [],
+    "createdAt": 1764251815414,
+    "status": "published"
   }
 ]
