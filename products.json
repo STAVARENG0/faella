@@ -10,5 +10,17 @@
     "gallery": [],
     "createdAt": 1764249616929,
     "status": "published"
+  },
+  {
+    "id": "1764249948100",
+    "title": "Tapete Redondo ",
+    "price": 30,
+    "description": "tapete colorido ",
+    "category": "Promotions",
+    "stock": 5,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764249948100/Gemini_Generated_Image_pt41c9pt41c9pt41.png",
+    "gallery": [],
+    "createdAt": 1764249949798,
+    "status": "published"
   }
 ]
