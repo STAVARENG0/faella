@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "1764249615570",
+    "title": "Roupa de bebe",
+    "price": 25,
+    "description": "roupinha bem linda ",
+    "category": "Weekly highlight",
+    "stock": 1,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764249615570/Gemini_Generated_Image_i9melli9melli9me.png",
+    "gallery": [],
+    "createdAt": 1764249616929,
+    "status": "published"
+  }
+]
