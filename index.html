@@ -9,9 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --rosa-principal: #ff2b7a;
-      --rosa-escuro: #e0256c;
-      --rosa-claro: #ffe3f0;
+      --rosa-principal: #eac2ca;
+      --rosa-escuro: #d49aa7;
+      --rosa-claro: #f7e4ea;
       --verde-botao: #1fae3b;
       --cinza-texto: #555;
       --cinza-claro: #f8f8f8;
@@ -71,21 +71,17 @@
 
     
     
-    .logo-circle {
+        .logo-circle {
       width: 170px;
       height: 170px;
       border-radius: 50%;
-      background: var(--rosa-principal);
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Risco mais fino, delicado, no mesmo tom de rosa */
-      border: 2px solid var(--rosa-principal);
-      /* Efeito neon mais suave usando o mesmo tom de rosa */
-      box-shadow:
-        0 0 6px #ff2b7a,
-        0 0 14px #ff2b7a,
-        0 0 22px #ff2b7a;
+      /* Apenas a borda no mesmo tom de rosa do layout */
+      border: 4px solid var(--rosa-principal);
+      box-shadow: none;
     }
 
     .logo-circle img {
