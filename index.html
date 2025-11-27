@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Jaella Crafts - Yarn Shop</title>
+  <title>Faella Crafts - Yarn Shop</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,6 +165,198 @@
       font-size: 1.2rem;
       color: var(--rosa-principal);
       cursor: pointer;
+    }
+
+    .cart-floating {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1000;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .cart-floating .cart-icon {
+      position: relative;
+      background: #fff;
+      border-style: solid;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--rosa-principal);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+    }
+
+    .cart-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 80px 16px 24px;
+      z-index: 999;
+    }
+
+    .cart-overlay.open {
+      display: flex;
+    }
+
+    .cart-modal {
+      width: min(420px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+      padding: 20px 22px 22px;
+    }
+
+    .cart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .cart-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #222;
+    }
+
+    .cart-close {
+      border: none;
+      background: #f3f3f3;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-body {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 8px 0;
+      border-top: 1px solid #f1f1f1;
+      border-bottom: 1px solid #f1f1f1;
+      margin-bottom: 12px;
+    }
+
+    .cart-empty {
+      font-size: 0.9rem;
+      color: #777;
+      padding: 14px 0;
+      text-align: center;
+    }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .cart-item + .cart-item {
+      border-top: 1px dashed #eee;
+    }
+
+    .cart-item-image img {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .cart-item-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .cart-item-price {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--rosa-principal);
+    }
+
+    .cart-item-qty {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fafafa;
+      border-radius: 999px;
+      padding: 2px 4px;
+      font-size: 0.85rem;
+    }
+
+    .cart-qty-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: none;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .cart-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    .cart-total-row strong {
+      font-size: 1.1rem;
+      color: #222;
+    }
+
+    .btn-checkout {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: linear-gradient(90deg, var(--rosa-escuro), var(--rosa-principal));
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .btn-checkout:hover {
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.22);
+    }
+
+    .btn-checkout:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
     }
 
     /* Navigation */
@@ -627,7 +819,7 @@
     <div class="header-inner">
       <div class="logo-circle">
         <!-- Replace "logo.png" with your actual logo file name/path -->
-        <img src="logo.png" alt="Jaella Crafts logo">
+        <img src="logo.png" alt="Faella Crafts logo">
       </div>
 
       <form class="search-container">
@@ -640,7 +832,7 @@
           <div class="cart-icon">🛒</div>
           <div>
             <div style="font-size:0.8rem;">My cart</div>
-            <strong style="font-size:0.85rem;">0 items</strong>
+            <strong style="font-size:0.85rem;"><span id="cartCountHeader">0</span> items</strong>
           </div>
         </div>
         <div class="social">
@@ -650,6 +842,34 @@
       </div>
     </div>
   </header>
+  <!-- Floating Cart Button -->
+  <button class="cart-floating" id="cartFloating" aria-label="Open cart">
+    <div class="cart-icon">
+      🛒
+      <span class="cart-badge" id="cartCountFloating">0</span>
+    </div>
+  </button>
+
+  <!-- Cart Modal -->
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-modal">
+      <div class="cart-header">
+        <h2>Your Cart</h2>
+        <button class="cart-close" id="cartCloseBtn" aria-label="Close cart">×</button>
+      </div>
+      <div class="cart-body" id="cartItemsContainer">
+        <p class="cart-empty">Your cart is empty.</p>
+      </div>
+      <div class="cart-footer">
+        <div class="cart-total-row">
+          <span>Total:</span>
+          <strong id="cartTotal">€ 0</strong>
+        </div>
+        <button class="btn-checkout">Checkout</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Navigation -->
   <nav>
@@ -667,7 +887,7 @@
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-left">
-        <div class="hero-label">Pink Friday Jaella Crafts</div>
+        <div class="hero-label">Pink Friday Faella Crafts</div>
         <h1 class="hero-title">One new offer every day!</h1>
         <p class="hero-sub">Special discounts on yarns, notions and accessories so you can crochet all month long.</p>
         <p class="hero-badge">Enjoy until 28/11</p>
@@ -721,7 +941,149 @@
         if (raw && Array.isArray(raw.items)) return raw.items;
         return [];
       }
+      const cartState = { items: [] };
 
+      const cartOverlay = document.getElementById('cartOverlay');
+      const cartItemsContainer = document.getElementById('cartItemsContainer');
+      const cartTotalEl = document.getElementById('cartTotal');
+      const headerCartCountEl = document.getElementById('cartCountHeader');
+      const floatingCartCountEl = document.getElementById('cartCountFloating');
+      const headerCartTrigger = document.querySelector('.cart');
+      const floatingCartTrigger = document.getElementById('cartFloating');
+      const cartCloseBtn = document.getElementById('cartCloseBtn');
+
+      function getCartCount() {
+        return cartState.items.reduce(function(sum, item) {
+          return sum + (item.quantity || 0);
+        }, 0);
+      }
+
+      function updateCartCounts() {
+        var count = getCartCount();
+        if (headerCartCountEl) headerCartCountEl.textContent = count;
+        if (floatingCartCountEl) floatingCartCountEl.textContent = count;
+      }
+
+      function updateCartTotal() {
+        if (!cartTotalEl) return;
+        var total = cartState.items.reduce(function(sum, item) {
+          var price = Number(item.price) || 0;
+          var qty = Number(item.quantity) || 0;
+          return sum + price * qty;
+        }, 0);
+        cartTotalEl.textContent = formatPrice(total);
+      }
+
+      function renderCartItems() {
+        if (!cartItemsContainer) return;
+        if (!cartState.items.length) {
+          cartItemsContainer.innerHTML = '<p class="cart-empty">Your cart is empty.</p>';
+          return;
+        }
+
+        var html = cartState.items.map(function(item, index) {
+          var safeTitle = (item.title || '').replace(/"/g, '&quot;');
+          return [
+            '<div class="cart-item">',
+              '<div class="cart-item-image">',
+                '<img src="' + (item.image || '') + '" alt="' + safeTitle + '">',
+              '</div>',
+              '<div>',
+                '<div class="cart-item-title">' + (item.title || '') + '</div>',
+                '<div class="cart-item-price">' + formatPrice(item.price) + '</div>',
+              '</div>',
+              '<div class="cart-item-qty">',
+                '<button class="cart-qty-btn" data-action="dec" data-index="' + index + '">−</button>',
+                '<span>' + item.quantity + '</span>',
+                '<button class="cart-qty-btn" data-action="inc" data-index="' + index + '">+</button>',
+              '</div>',
+            '</div>'
+          ].join('');
+        }).join('');
+
+        cartItemsContainer.innerHTML = html;
+      }
+
+      function updateCartUI() {
+        updateCartCounts();
+        updateCartTotal();
+        renderCartItems();
+      }
+
+      function addToCart(product) {
+        if (!product) return;
+        var id = product.id || product.title;
+        var existing = cartState.items.find(function(item) { return item.id === id; });
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          cartState.items.push({
+            id: id,
+            title: product.title,
+            price: Number(product.price) || 0,
+            image: product.image,
+            quantity: 1
+          });
+        }
+        updateCartUI();
+      }
+
+      function changeItemQuantity(index, delta) {
+        var item = cartState.items[index];
+        if (!item) return;
+        item.quantity += delta;
+        if (item.quantity <= 0) {
+          cartState.items.splice(index, 1);
+        }
+        updateCartUI();
+      }
+
+      function openCart() {
+        if (!cartOverlay) return;
+        cartOverlay.classList.add('open');
+      }
+
+      function closeCart() {
+        if (!cartOverlay) return;
+        cartOverlay.classList.remove('open');
+      }
+
+      if (headerCartTrigger) {
+        headerCartTrigger.addEventListener('click', openCart);
+      }
+
+      if (floatingCartTrigger) {
+        floatingCartTrigger.addEventListener('click', openCart);
+      }
+
+      if (cartCloseBtn) {
+        cartCloseBtn.addEventListener('click', closeCart);
+      }
+
+      if (cartOverlay) {
+        cartOverlay.addEventListener('click', function(e) {
+          if (e.target === cartOverlay) {
+            closeCart();
+          }
+        });
+      }
+
+      if (cartItemsContainer) {
+        cartItemsContainer.addEventListener('click', function(e) {
+          var btn = e.target.closest('.cart-qty-btn');
+          if (!btn) return;
+          var index = Number(btn.getAttribute('data-index'));
+          var action = btn.getAttribute('data-action');
+          if (action === 'inc') changeItemQuantity(index, 1);
+          if (action === 'dec') changeItemQuantity(index, -1);
+        });
+      }
+
+      updateCartUI();
+
+
+
+      
       function renderProducts(products) {
         grid.innerHTML = '';
 
@@ -731,11 +1093,15 @@
             const article = document.createElement('article');
             article.className = 'product-card';
 
-            const imageUrl = p.image || (Array.isArray(p.gallery) && p.gallery[0]) || 'https://via.placeholder.com/160x160?text=Product';
+            const gallery = Array.isArray(p.gallery)
+              ? p.gallery
+              : (Array.isArray(p.images) ? p.images : null);
+            const imageUrl = p.image || (gallery && gallery.length ? gallery[0] : 'https://via.placeholder.com/160x160?text=Product');
             const title = p.title || '';
             const category = p.category || 'Promotion';
-            const brand = 'Jaella Crafts';
-            const priceText = formatPrice(p.price);
+            const brand = 'Faella Crafts';
+            const rawPrice = p.price || p.priceValue || 0;
+            const priceText = formatPrice(rawPrice);
             const description = p.description || '';
 
             article.innerHTML = [
@@ -755,6 +1121,20 @@
             ].join('');
 
             grid.appendChild(article);
+
+            const btn = article.querySelector('.btn-buy');
+            if (btn) {
+              const productData = {
+                id: p.id || p.ID || p.sku || p.slug || title,
+                title: title,
+                price: rawPrice,
+                image: imageUrl
+              };
+              btn.addEventListener('click', function() {
+                addToCart(productData);
+                btn.textContent = 'Add to cart';
+              });
+            }
           });
 
         if (!grid.children.length) {
@@ -762,7 +1142,7 @@
         }
       }
 
-      const urls = [
+const urls = [
         'ProductJSON',
         'ProductJSON?t=' + Date.now(),
         'products.json?t=' + Date.now(),
