@@ -712,7 +712,7 @@
         return num.toLocaleString('en-IE', { style: 'currency', currency: 'EUR' });
       }
 
-      const productsUrl = 'ProductJSON?t=' + Date.now();
+      const productsUrl = 'ProductJSON';
       fetch(productsUrl, {
         cache: 'no-store',
         headers: {
