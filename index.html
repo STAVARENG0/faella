@@ -540,7 +540,37 @@
 
     @media (max-width: 480px) {
       .products-grid {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .product-card {
+        border-radius: 6px;
+      }
+
+      .product-image {
+        padding: 8px 4px 4px;
+      }
+
+      .product-image img {
+        max-width: 70px;
+      }
+
+      .product-body {
+        padding: 6px 8px 8px;
+      }
+
+      .product-name {
+        font-size: 0.8rem;
+        min-height: 32px;
+      }
+
+      .product-price {
+        font-size: 1rem;
+      }
+
+      .btn-buy {
+        padding: 6px 14px;
+        font-size: 0.75rem;
       }
     }
 
