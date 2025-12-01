@@ -946,6 +946,30 @@
       }
       const cartState = { items: [] };
 
+      function loadCartFromStorage() {
+        try {
+          var saved = localStorage.getItem('cartItems');
+          if (!saved) return;
+          var parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            cartState.items = parsed.map(function(item) {
+              return {
+                id: item.id || item.title,
+                title: item.title,
+                price: Number(item.price) || 0,
+                image: item.image,
+                quantity: Number(item.quantity || item.qty || 1) || 1
+              };
+            }).filter(function(item) {
+              return item.quantity > 0;
+            });
+          }
+        } catch (e) {
+          console.warn('Could not read cart from localStorage', e);
+        }
+      }
+
+
       function persistCart() {
         try {
           localStorage.setItem('cartItems', JSON.stringify(cartState.items));
@@ -1090,6 +1114,8 @@
           if (action === 'dec') changeItemQuantity(index, -1);
         });
       }
+
+      loadCartFromStorage();
 
       updateCartUI();
 
