@@ -177,6 +177,39 @@
       <tbody id="listaProdutos"></tbody>
     </table>
   </div>
+
+<div class="form-section" style="max-width: 1200px; margin: 20px auto;">
+  <h2 style="margin-bottom: 12px; color: var(--orange);">Configurar propaganda do topo</h2>
+  <p style="font-size: 13px; margin-bottom: 10px;">
+    Aqui você altera apenas os <strong>textos</strong> da faixa de propaganda que aparece acima dos produtos, mantendo o mesmo layout.
+  </p>
+  <form class="form" id="heroForm">
+    <label for="heroLabel">Etiqueta pequena (acima do título)</label>
+    <input id="heroLabel" type="text" placeholder="Ex.: Pink Friday Faella Crafts" />
+
+    <label for="heroTitle">Título principal</label>
+    <input id="heroTitle" type="text" placeholder="Ex.: One new offer every day!" />
+
+    <label for="heroSub">Texto de apoio</label>
+    <textarea id="heroSub" placeholder="Ex.: Special discounts on yarns, notions and accessories so you can crochet all month long."></textarea>
+
+    <label for="heroBadge">Texto pequeno abaixo (ex.: validade)</label>
+    <input id="heroBadge" type="text" placeholder="Ex.: Enjoy until 28/11" />
+
+    <label for="heroCardTitle">Título do cartão à direita</label>
+    <input id="heroCardTitle" type="text" placeholder="Ex.: Pink Friday" />
+
+    <label for="heroCardSub">Subtítulo do cartão</label>
+    <input id="heroCardSub" type="text" placeholder="Ex.: Unmissable offers across the shop" />
+
+    <label for="heroCardDate">Texto de data do cartão</label>
+    <input id="heroCardDate" type="text" placeholder="Ex.: Until 28/11" />
+
+    <button type="button" id="heroSaveBtn">Salvar propaganda</button>
+    <div class="alert info" id="heroStatus" style="margin-top:8px; display:none;"></div>
+  </form>
+</div>
+
 </div>
 
 <!-- GitHub Config Modal -->
@@ -190,6 +223,8 @@
     <input id="ghBranch" placeholder="main" style="width:100%; margin-bottom:10px;" type="text"/>
     <label>Caminho do arquivo</label>
     <input id="ghPath" placeholder="products.json" style="width:100%; margin-bottom:10px;" type="text"/>
+    <label>Caminho do arquivo da propaganda</label>
+    <input id="ghHeroPath" placeholder="hero.json" style="width:100%; margin-bottom:10px;" type="text"/>
     <label>Personal Access Token</label>
     <input id="ghToken" placeholder="ghp_xxx" style="width:100%; margin-bottom:16px;" type="password"/>
     <div style="display:flex; gap:10px; justify-content:flex-end; margin-bottom:10px; flex-wrap: wrap;">
@@ -439,6 +474,119 @@
     a.remove();
     setTimeout(()=> URL.revokeObjectURL(url), 1000);
   }
+
+
+  // --- Hero (propaganda) helpers ---
+  function getHeroConfigFromForm(){
+    return {
+      label: $("heroLabel") ? $("heroLabel").value.trim() : "",
+      title: $("heroTitle") ? $("heroTitle").value.trim() : "",
+      sub: $("heroSub") ? $("heroSub").value.trim() : "",
+      badge: $("heroBadge") ? $("heroBadge").value.trim() : "",
+      cardTitle: $("heroCardTitle") ? $("heroCardTitle").value.trim() : "",
+      cardSub: $("heroCardSub") ? $("heroCardSub").value.trim() : "",
+      cardDate: $("heroCardDate") ? $("heroCardDate").value.trim() : ""
+    };
+  }
+
+  function fillHeroForm(data){
+    if(!data) return;
+    if($("heroLabel")) $("heroLabel").value = data.label || "";
+    if($("heroTitle")) $("heroTitle").value = data.title || "";
+    if($("heroSub")) $("heroSub").value = data.sub || "";
+    if($("heroBadge")) $("heroBadge").value = data.badge || "";
+    if($("heroCardTitle")) $("heroCardTitle").value = data.cardTitle || "";
+    if($("heroCardSub")) $("heroCardSub").value = data.cardSub || "";
+    if($("heroCardDate")) $("heroCardDate").value = data.cardDate || "";
+  }
+
+  async function carregarHeroConfig(){
+    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
+    if(!cfg.repo || !cfg.branch || !cfg.token) return;
+    const heroPath = cfg.heroPath || 'hero.json';
+    try{
+      const res = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${heroPath}?ref=${cfg.branch}`, {
+        headers: { Authorization: `token ${cfg.token}` }
+      });
+      if(!res.ok) return;
+      const data = await res.json();
+      const raw = decodeBase64Utf8(data.content || '');
+      const json = JSON.parse(raw || '{}');
+      fillHeroForm(json);
+    }catch(e){
+      console.error('Erro ao carregar hero.json:', e);
+    }
+  }
+
+  async function salvarHeroConfig(){
+    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
+    if(!cfg.repo || !cfg.branch || !cfg.token){
+      alert('Configure o GitHub primeiro (repo, branch, token).');
+      return;
+    }
+    const heroPath = cfg.heroPath || 'hero.json';
+    const url = `https://api.github.com/repos/${cfg.repo}/contents/${heroPath}`;
+    let sha = null;
+
+    try{
+      const res = await fetch(url+`?ref=${cfg.branch}`, {
+        headers: { "Authorization": `token ${cfg.token}`, "Accept": "application/vnd.github+json" }
+      });
+      if(res.ok){
+        const info = await res.json();
+        sha = info.sha;
+      }
+    }catch(e){
+      console.error('Erro ao buscar SHA do hero.json:', e);
+    }
+
+    const heroData = getHeroConfigFromForm();
+    const content = encodeBase64Utf8(JSON.stringify(heroData, null, 2));
+    const body = {
+      message: 'Update hero.json via panel',
+      branch: cfg.branch,
+      content: content
+    };
+    if(sha) body.sha = sha;
+
+    const statusEl = $("heroStatus");
+    if(statusEl){
+      statusEl.style.display = 'block';
+      statusEl.className = 'alert info';
+      statusEl.textContent = '⏳ Salvando propaganda...';
+    }
+
+    try{
+      const putRes = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `token ${cfg.token}`,
+          "Accept": "application/vnd.github+json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      if(putRes.ok){
+        if(statusEl){
+          statusEl.className = 'alert success';
+          statusEl.textContent = '✅ Propaganda atualizada com sucesso!';
+        }
+      } else {
+        const txt = await putRes.text().catch(function(){ return ''; });
+        if(statusEl){
+          statusEl.className = 'alert error';
+          statusEl.textContent = '❌ Erro ao salvar propaganda: ' + putRes.status;
+        }
+        console.error('Erro ao salvar hero.json:', txt);
+      }
+    }catch(e){
+      if(statusEl){
+        statusEl.className = 'alert error';
+        statusEl.textContent = '❌ Falha ao salvar propaganda: ' + (e.message || e);
+      }
+    }
+  }
+
 
   // --- UI rendering ---
   function renderProdutos() {
@@ -699,11 +847,13 @@
     ghModal.classList.add('show');
     document.body.classList.add('modal-open');
     carregarProdutosGitHub();
+    carregarHeroConfig();
   });
   on($("closeGithubModal"), 'click', () => {
     ghModal.classList.remove('show');
     document.body.classList.remove('modal-open');
     carregarProdutosGitHub();
+    carregarHeroConfig();
   });
 
   function showGhAlert(msg, ok){
@@ -720,13 +870,18 @@
     if(cfg.repo) $("ghRepo").value = cfg.repo;
     if(cfg.branch) $("ghBranch").value = cfg.branch;
     if(cfg.path) $("ghPath").value = cfg.path;
+    if(cfg.heroPath) $("ghHeroPath").value = cfg.heroPath;
     if(cfg.token) $("ghToken").value = cfg.token;
+    if(!cfg.heroPath && $("ghHeroPath") && !$("ghHeroPath").value){
+      $("ghHeroPath").value = 'hero.json';
+    }
   }
   function saveGithubConfig(){
     const cfg = {
       repo: $("ghRepo").value,
       branch: $("ghBranch").value,
       path: $("ghPath").value,
+      heroPath: $("ghHeroPath") ? $("ghHeroPath").value || 'hero.json' : 'hero.json',
       token: $("ghToken").value
     };
     localStorage.setItem('ghConfig', JSON.stringify(cfg));
@@ -750,9 +905,11 @@
   on($("saveGithubConfig"), 'click', saveGithubConfig);
   on($("testGithubConfig"), 'click', testGithubConfig);
   on($("downloadProducts"), 'click', downloadProductsJson);
+  on($("heroSaveBtn"), 'click', salvarHeroConfig);
 
   // initial load
   carregarProdutosGitHub();
+  carregarHeroConfig();
 })();</script>
 </body>
 </html>
