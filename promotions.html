@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Faella Crafts - Yarn Shop</title>
+  <title>Faella Crafts - Promotions</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -931,6 +931,8 @@
       const grid = document.getElementById('productsGrid');
       if (!grid) return;
 
+      var CATEGORY_FILTER = 'Promotions';
+
       function formatPrice(value) {
         const num = Number(value || 0);
         return num.toLocaleString('en-IE', { style: 'currency', currency: 'EUR' });
@@ -1194,7 +1196,11 @@ const urls = [
           })
           .then(function(data) {
             const products = normalizeProducts(data);
-            renderProducts(products);
+            renderProducts(
+              products.filter(function(p) {
+                return p && p.category === CATEGORY_FILTER;
+              })
+            );
           })
           .catch(function(err) {
             console.error('Error loading products from', url, err);
