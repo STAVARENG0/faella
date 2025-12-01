@@ -929,6 +929,7 @@
   <script>
     (function() {
       const grid = document.getElementById('productsGrid');
+      if (!grid) return;
 
       function formatPrice(value) {
         const num = Number(value || 0);
@@ -1219,7 +1220,28 @@ const urls = [
           })
           .then(function(data) {
             const products = normalizeProducts(data);
-            renderProducts(products);
+
+            // Get search term from URL (?q=...)
+            var params = new URLSearchParams(window.location.search);
+            var term = (params.get('q') || '').trim().toLowerCase();
+
+            var filtered = products;
+            if (term) {
+              filtered = products.filter(function (p) {
+                var title = (p.title || p.name || '').toLowerCase();
+                var category = (p.category || '').toLowerCase();
+                var brand = (p.brand || 'Faella Crafts').toLowerCase();
+                var description = (p.description || '').toLowerCase();
+                return (
+                  title.indexOf(term) !== -1 ||
+                  category.indexOf(term) !== -1 ||
+                  brand.indexOf(term) !== -1 ||
+                  description.indexOf(term) !== -1
+                );
+              });
+            }
+
+            renderProducts(filtered);
           })
           .catch(function(err) {
             console.error('Error loading products from', url, err);
@@ -1232,60 +1254,20 @@ const urls = [
   </script>
 
   <script>
-    (function() {
-      var heroMap = {
-        label: '.hero-label',
-        title: '.hero-title',
-        sub: '.hero-sub',
-        badge: '.hero-badge',
-        cardTitle: '.hero-card-title',
-        cardSub: '.hero-card-sub',
-        cardDate: '.hero-card-date'
-      };
+    (function () {
+      var form = document.querySelector('.search-container');
+      var input = document.querySelector('.search-input');
+      if (!form || !input) return;
 
-      function applyHero(data) {
-        if (!data) return;
-        try {
-          Object.keys(heroMap).forEach(function(key) {
-            var selector = heroMap[key];
-            var el = document.querySelector(selector);
-            if (el && data[key]) {
-              el.textContent = data[key];
-            }
-          });
-        } catch (e) {
-          console && console.warn && console.warn('Error applying hero config', e);
-        }
-      }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var term = input.value.trim();
+        if (!term) return;
 
-      function loadHero() {
-        fetch('hero.json?t=' + Date.now(), {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        })
-          .then(function(res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-          })
-          .then(function(data) {
-            applyHero(data);
-          })
-          .catch(function(err) {
-            if (window.console && console.warn) {
-              console.warn('Hero config not loaded:', err);
-            }
-          });
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadHero);
-      } else {
-        loadHero();
-      }
+        var basePath = window.location.pathname.replace(/[^\/]+$/, '');
+        var url = basePath + 'index.html?q=' + encodeURIComponent(term);
+        window.location.href = url;
+      });
     })();
   </script>
 

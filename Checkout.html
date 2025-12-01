@@ -493,5 +493,24 @@ if(typeof paypal !== 'undefined' && state.subtotal > 0){
 }
 </script>
 
+
+  <script>
+    (function () {
+      var form = document.querySelector('.search-container');
+      var input = document.querySelector('.search-input');
+      if (!form || !input) return;
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var term = input.value.trim();
+        if (!term) return;
+
+        var basePath = window.location.pathname.replace(/[^\/]+$/, '');
+        var url = basePath + 'index.html?q=' + encodeURIComponent(term);
+        window.location.href = url;
+      });
+    })();
+  </script>
+
 </body>
 </html>
