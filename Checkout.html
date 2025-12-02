@@ -287,6 +287,19 @@ function readCartFromQuery(){
     const raw = params.get('cart');
     if(!raw) return [];
     const data = JSON.parse(raw);
+
+    // Se vier o carrinho pela URL, salva no localStorage
+    // e limpa a URL para ficar apenas "Checkout.html"
+    if (Array.isArray(data) && data.length) {
+      try {
+        localStorage.setItem('cartItems', JSON.stringify(data));
+      } catch (e) {
+        console.error('Erro ao salvar cartItems no localStorage:', e);
+      }
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+
     return Array.isArray(data) ? data : [];
   }catch(e){
     return [];
