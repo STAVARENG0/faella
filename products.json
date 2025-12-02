@@ -75,5 +75,19 @@
     ],
     "createdAt": 1764684183995,
     "status": "published"
+  },
+  {
+    "id": "1764686678548",
+    "title": "CHAVEIRO BANANA",
+    "price": 15,
+    "description": "BANANINHA PARA CHAVES",
+    "category": "Keychains",
+    "stock": 5,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764686678548/Gemini_Generated_Image_bdjm0wbdjm0wbdjm.png",
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1764686678548/Gemini_Generated_Image_al5zqal5zqal5zqa.png"
+    ],
+    "createdAt": 1764686681163,
+    "status": "published"
   }
 ]
