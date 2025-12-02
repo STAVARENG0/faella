@@ -275,7 +275,7 @@ footer{
   <footer>© <span id="year"></span> Faella Crafts</footer>
 </div>
 
-<script src="https://www.paypal.com/sdk/js?client-id=AfTde7kvXeDpijvvMVxUcfb7b-XIQgWMnQ8W2rcUd8PX5wyHAddc-Xf0_VG_wLUVl0dNw_9HXAzpo6dt&currency=EUR&intent=capture&commit=true&locale=en_IE&components=buttons,funding-eligibility&enable-funding=card"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=AYyAFp_6STukM7czylcVIXHyRAN6lT1mF_ZD4v75kRFE4zoOWYhum_Dra8_YBFUp8I2TXk6PxEgxOVqq&currency=EUR&intent=capture&commit=true&locale=en_IE&components=buttons,funding-eligibility&enable-funding=card"></script>
 <script>
 // ===== Keys used by the site =====
 const CART_KEYS_ORDER = ['cartItems'];
@@ -492,25 +492,6 @@ if(typeof paypal !== 'undefined' && state.subtotal > 0){
   if(btnCard.isEligible()) btnCard.render('#paypal-button-card');
 }
 </script>
-
-
-  <script>
-    (function () {
-      var form = document.querySelector('.search-container');
-      var input = document.querySelector('.search-input');
-      if (!form || !input) return;
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var term = input.value.trim();
-        if (!term) return;
-
-        var basePath = window.location.pathname.replace(/[^\/]+$/, '');
-        var url = basePath + 'index.html?q=' + encodeURIComponent(term);
-        window.location.href = url;
-      });
-    })();
-  </script>
 
 </body>
 </html>
