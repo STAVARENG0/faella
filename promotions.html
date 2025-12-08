@@ -55,6 +55,10 @@
     /* Header */
     header {
       border-bottom: 1px solid #f0f0f0;
+      background-color: #fff;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
 
     .header-inner {
@@ -1673,7 +1677,21 @@ const urls = [
               el.textContent = data[key];
             }
           });
-        } catch (e) {
+
+          var headerEl = document.querySelector('header');
+          if (headerEl) {
+            if (data.bgImage) {
+              headerEl.style.backgroundImage = 'url(' + data.bgImage + ')';
+              headerEl.style.backgroundSize = 'cover';
+              headerEl.style.backgroundPosition = 'center';
+              headerEl.style.backgroundRepeat = 'no-repeat';
+            } else {
+              headerEl.style.backgroundImage = '';
+              headerEl.style.backgroundColor = '#fff';
+            }
+          }
+        }
+        catch (e) {
           console && console.warn && console.warn('Error applying hero config', e);
         }
       }

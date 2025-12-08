@@ -205,6 +205,13 @@
     <label for="heroCardDate">Texto de data do cartão</label>
     <input id="heroCardDate" type="text" placeholder="Ex.: Until 28/11" />
 
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ffd1e5;">
+      <label for="heroBgFile">Imagem de fundo da capa (opcional)</label>
+      <input id="heroBgFile" type="file" accept="image/*" />
+      <div id="heroBgPreview" class="help" style="margin-top:6px;"></div>
+      <button type="button" id="heroBgRemoveBtn" style="margin-top:6px; background:#c0392b;">Remover capa e usar fundo branco</button>
+    </div>
+
     <button type="button" id="heroSaveBtn">Salvar propaganda</button>
     <div class="alert info" id="heroStatus" style="margin-top:8px; display:none;"></div>
   </form>
@@ -326,6 +333,11 @@
   let editPendingUploads = []; // {file, url}
   let editImageList = [];
   let editExistingCount = 0;
+
+  // Hero / capa do topo
+  let heroBgImage = '';
+  let heroBgFile = null;
+  let heroBgShouldClear = false;
 
   // --- GitHub helpers ---
   async function carregarProdutosGitHub(){
@@ -475,7 +487,6 @@
     setTimeout(()=> URL.revokeObjectURL(url), 1000);
   }
 
-
   // --- Hero (propaganda) helpers ---
   function getHeroConfigFromForm(){
     return {
@@ -500,6 +511,66 @@
     if($("heroCardDate")) $("heroCardDate").value = data.cardDate || "";
   }
 
+  function updateHeroBgPreview(){
+    const el = $("heroBgPreview");
+    if(!el) return;
+
+    if(heroBgFile){
+      const url = URL.createObjectURL(heroBgFile);
+      el.innerHTML = '<p class="help">Nova capa selecionada — será enviada ao salvar.</p>' +
+        '<img src="' + url + '" alt="Pré-visualização da capa" style="margin-top:6px; max-width:100%; border-radius:8px;">';
+    } else if(heroBgImage){
+      el.innerHTML = '<p class="help">Capa atual:</p>' +
+        '<img src="' + heroBgImage + '" alt="Capa atual" style="margin-top:6px; max-width:100%; border-radius:8px;">';
+    } else {
+      el.innerHTML = '<p class="help">Nenhuma capa definida — o site usa o fundo branco padrão.</p>';
+    }
+  }
+
+  async function uploadHeroBgImage(file){
+    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
+    if(!cfg.repo || !cfg.branch || !cfg.token){
+      throw new Error('Configure o GitHub primeiro (repo, branch, token) para enviar a capa.');
+    }
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async function(){
+        try{
+          const result = String(reader.result || '');
+          const base64 = result.split(',')[1] || '';
+          const safeName = (file.name || 'hero-bg').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_.-]/g,'');
+          const imgPath = `assets/hero-bg-${Date.now()}-${safeName}`;
+          const url = `https://api.github.com/repos/${cfg.repo}/contents/${imgPath}`;
+          const body = {
+            message: `Atualizar imagem de capa ${safeName}`,
+            branch: cfg.branch,
+            content: base64
+          };
+          const res = await fetch(url, {
+            method: 'PUT',
+            headers: {
+              "Authorization": `token ${cfg.token}`,
+              "Accept": "application/vnd.github+json",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+          });
+          if(!res.ok){
+            const txt = await res.text().catch(function(){ return ''; });
+            reject(new Error('Erro ao enviar capa: ' + res.status + (txt ? ' - ' + txt : '')));
+            return;
+          }
+          const rawUrl = `https://raw.githubusercontent.com/${cfg.repo}/${cfg.branch}/${imgPath}`;
+          resolve(rawUrl);
+        }catch(err){
+          reject(err);
+        }
+      };
+      reader.onerror = function(){ reject(new Error('Falha ao ler o arquivo de capa.')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function carregarHeroConfig(){
     const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
     if(!cfg.repo || !cfg.branch || !cfg.token) return;
@@ -513,6 +584,10 @@
       const raw = decodeBase64Utf8(data.content || '');
       const json = JSON.parse(raw || '{}');
       fillHeroForm(json);
+      heroBgImage = json.bgImage || '';
+      heroBgFile = null;
+      heroBgShouldClear = false;
+      updateHeroBgPreview();
     }catch(e){
       console.error('Erro ao carregar hero.json:', e);
     }
@@ -540,7 +615,25 @@
       console.error('Erro ao buscar SHA do hero.json:', e);
     }
 
+    // Se tiver uma nova imagem selecionada, faz o upload primeiro
+    try{
+      if(heroBgFile){
+        const uploadedUrl = await uploadHeroBgImage(heroBgFile);
+        heroBgImage = uploadedUrl;
+        heroBgFile = null;
+        heroBgShouldClear = false;
+      }
+      if(heroBgShouldClear){
+        heroBgImage = '';
+      }
+    }catch(e){
+      alert('Erro ao enviar a imagem de capa: ' + (e.message || e));
+      return;
+    }
+
     const heroData = getHeroConfigFromForm();
+    heroData.bgImage = heroBgImage || '';
+
     const content = encodeBase64Utf8(JSON.stringify(heroData, null, 2));
     const body = {
       message: 'Update hero.json via panel',
@@ -584,9 +677,10 @@
         statusEl.className = 'alert error';
         statusEl.textContent = '❌ Falha ao salvar propaganda: ' + (e.message || e);
       }
+    } finally {
+      updateHeroBgPreview();
     }
   }
-
 
   // --- UI rendering ---
   function renderProdutos() {
@@ -905,6 +999,21 @@
   on($("saveGithubConfig"), 'click', saveGithubConfig);
   on($("testGithubConfig"), 'click', testGithubConfig);
   on($("downloadProducts"), 'click', downloadProductsJson);
+
+  on($("heroBgFile"), 'change', (e) => {
+    const files = e.target.files || [];
+    heroBgFile = files[0] || null;
+    heroBgShouldClear = false;
+    updateHeroBgPreview();
+  });
+  on($("heroBgRemoveBtn"), 'click', () => {
+    heroBgFile = null;
+    heroBgImage = '';
+    heroBgShouldClear = true;
+    const input = $("heroBgFile");
+    if(input) input.value = '';
+    updateHeroBgPreview();
+  });
   on($("heroSaveBtn"), 'click', salvarHeroConfig);
 
   // initial load
