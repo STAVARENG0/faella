@@ -166,7 +166,6 @@
       justify-content: center;
       font-size: 1.1rem;
       color: var(--rosa-principal);
-      background-color: #ffffffee;
     }
 
     .social {
@@ -1712,11 +1711,11 @@ const urls = [
               headerEl.style.backgroundColor = '#fff';
             }
           }
-        }
-        catch (e) {
+        } catch (e) {
           console && console.warn && console.warn('Error applying hero config', e);
         }
       }
+
 
       function loadHero() {
         fetch('hero.json?t=' + Date.now(), {
