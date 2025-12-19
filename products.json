@@ -67,17 +67,5 @@
     "gallery": [],
     "createdAt": 1766182426225,
     "status": "published"
-  },
-  {
-    "id": "1766182498836",
-    "title": "td",
-    "price": 1,
-    "description": "",
-    "category": "Dolls",
-    "stock": 0,
-    "image": "",
-    "gallery": [],
-    "createdAt": 1766182498837,
-    "status": "published"
   }
 ]
