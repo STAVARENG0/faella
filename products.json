@@ -79,5 +79,17 @@
     "gallery": [],
     "createdAt": 1766183151321,
     "status": "published"
+  },
+  {
+    "id": "1766183448997",
+    "title": "special doll",
+    "price": 39.99,
+    "description": "special doll, a beautiful doll to gift someone. It is approximately 22 cm and you can choose the colour of the outfit according to your preference.",
+    "category": "Dolls",
+    "stock": 2,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766183448997/boneca roza 2.jpg",
+    "gallery": [],
+    "createdAt": 1766183451153,
+    "status": "published"
   }
 ]
