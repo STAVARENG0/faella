@@ -31,5 +31,17 @@
     ],
     "createdAt": 1766180151448,
     "status": "published"
+  },
+  {
+    "id": "1766181375740",
+    "title": "liza doll",
+    "price": 45,
+    "description": "Beautiful handmade doll for all ages, it is approximately      20 cm tall, and her clothes can be removed.",
+    "category": "Dolls",
+    "stock": 1,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766181375740/bone.jpg",
+    "gallery": [],
+    "createdAt": 1766181377240,
+    "status": "published"
   }
 ]
