@@ -67,5 +67,17 @@
     "gallery": [],
     "createdAt": 1766182426225,
     "status": "published"
+  },
+  {
+    "id": "1766183149752",
+    "title": "sheep",
+    "price": 45,
+    "description": "A beautiful sheep for your child, fully detailed and made with durable material, approximately 20 cm in size.",
+    "category": "Animals",
+    "stock": 1,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766183149752/ovelha .jpg",
+    "gallery": [],
+    "createdAt": 1766183151321,
+    "status": "published"
   }
 ]
