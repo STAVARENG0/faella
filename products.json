@@ -55,5 +55,17 @@
     "gallery": [],
     "createdAt": 1766181973931,
     "status": "published"
+  },
+  {
+    "id": "1766182424901",
+    "title": "little cow",
+    "price": 30,
+    "description": "This is a beautiful little cow suitable for all ages, perfect for playing and decorating a room. It is approximately 17 cm tall.",
+    "category": "Animals",
+    "stock": 1,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766182424901/vaquinha.jpg",
+    "gallery": [],
+    "createdAt": 1766182426225,
+    "status": "published"
   }
 ]
