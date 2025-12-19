@@ -24,7 +24,10 @@
     "category": "Weekly highlight",
     "stock": 3,
     "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766180149457/enfeite 02.jpg",
-    "gallery": [],
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766180149457/enfeite.jpg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766180149457/enfeite 01.jpg"
+    ],
     "createdAt": 1766180151448,
     "status": "published"
   }
