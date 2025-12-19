@@ -58,5 +58,17 @@
     ],
     "createdAt": 1764686955584,
     "status": "published"
+  },
+  {
+    "id": "1766180149457",
+    "title": "Christmas tree decorations",
+    "price": 17.99,
+    "description": "Celebrate the season with these adorable handmade Christmas ornaments! From Santa’s curly beard to the Gingerbread Man’s sweet smile, these crochet Amigurumi dolls add a cozy, personal touch to your holiday decor. Limited quantities available – grab your festive friends today! 🎄✨\n",
+    "category": "Weekly highlight",
+    "stock": 3,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1766180149457/enfeite 02.jpg",
+    "gallery": [],
+    "createdAt": 1766180151448,
+    "status": "published"
   }
 ]
