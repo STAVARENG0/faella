@@ -156,6 +156,36 @@
       background-color: #ffffffee;
     }
 
+.orders-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  background: var(--rosa-principal);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.orders-btn:hover {
+  background: var(--rosa-escuro);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+}
+
+.orders-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+}
+
+
     .cart-icon {
       width: 34px;
       height: 34px;
@@ -676,7 +706,8 @@
       border-radius: 24px;
       background: #fff;
       box-shadow: 0 22px 50px rgba(0,0,0,0.26);
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     .product-modal::before {
@@ -1072,7 +1103,10 @@
         <button class="search-btn" type="submit">🔍</button>
       </form>
 
-      <div class="header-right">
+      
+<div class="header-right">
+  <button class="orders-btn" type="button">Orders</button>
+
         <div class="social">
           <a href="https://www.instagram.com/faellacrafts?igsh=bWFwcHg4Y3V5YXJv&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram Faella Crafts">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1384,6 +1418,13 @@
       const headerCartTrigger = document.querySelector('.cart');
       const floatingCartTrigger = document.getElementById('cartFloating');
       const cartCloseBtn = document.getElementById('cartCloseBtn');
+const ordersBtn = document.querySelector('.orders-btn');
+if (ordersBtn) {
+  ordersBtn.addEventListener('click', function () {
+    window.location.href = 'orders.html';
+  });
+}
+
 
       function getCartCount() {
         return cartState.items.reduce(function(sum, item) {
@@ -1563,7 +1604,7 @@
                 '<h3 class="product-name">' + title + '</h3>',
                 '<span class="product-brand">' + brand + '</span>',
                 '<p class="product-price">' + priceText + ' <span></span></p>',
-                description ? '<p class="product-installments">' + description + '</p>' : '',
+                '',
               '</div>',
               '<div class="product-footer">',
                 '<button class="btn-buy">ADD TO CART</button>',

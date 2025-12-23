@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Orders Information | Faella Crafts</title>
+  <style>
+    :root {
+      --accent: #d490a3;
+      --accent-dark: #b26a80;
+      --text-main: #444444;
+      --text-muted: #777777;
+      --bg: #fdfbff;
+      --border-soft: #e4dfe8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      background: radial-gradient(circle at top, #ffffff 0, var(--bg) 60%, #f7f3fb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .page {
+      background: #ffffff;
+      max-width: 720px;
+      width: 100%;
+      border-radius: 24px;
+      padding: 32px 26px 28px;
+      box-shadow: 0 18px 50px rgba(46, 19, 64, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 0 0, rgba(212, 144, 163, 0.15), transparent 55%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-wrap {
+      width: 70px;
+      height: 70px;
+      border-radius: 20px;
+      background: #f7f3fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid rgba(212, 144, 163, 0.25);
+    }
+
+    .logo-wrap img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .title-area h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0;
+      color: #222222;
+    }
+
+    .title-area p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .content {
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .content h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: #333333;
+      margin-bottom: 14px;
+    }
+
+    .content p {
+      font-size: 0.96rem;
+      line-height: 1.7;
+      margin: 8px 0;
+      color: var(--text-main);
+    }
+
+    .highlight-box {
+      margin: 18px 0;
+      padding: 14px 14px 13px;
+      border-radius: 18px;
+      background: linear-gradient(
+        120deg,
+        rgba(212, 144, 163, 0.1),
+        rgba(247, 243, 251, 0.95)
+      );
+      border: 1px solid var(--border-soft);
+    }
+
+    .highlight-box p {
+      margin: 4px 0;
+      font-size: 0.94rem;
+    }
+
+    .highlight-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .list {
+      margin: 14px 0 6px;
+      padding-left: 18px;
+    }
+
+    .list li {
+      margin: 4px 0;
+      font-size: 0.95rem;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .actions {
+      margin-top: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .back-link {
+      font-size: 0.9rem;
+      text-decoration: none;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-link span {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .whatsapp-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 22px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #25d366;
+      color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 10px 22px rgba(37, 211, 102, 0.35);
+      transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .whatsapp-btn span {
+      margin-right: 6px;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .whatsapp-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(37, 211, 102, 0.4);
+      filter: brightness(1.03);
+    }
+
+    .whatsapp-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 16px rgba(37, 211, 102, 0.35);
+    }
+
+    @media (max-width: 600px) {
+      .page {
+        padding: 24px 18px 22px;
+        border-radius: 18px;
+      }
+
+      .header {
+        align-items: flex-start;
+      }
+
+      .logo-wrap {
+        width: 62px;
+        height: 62px;
+      }
+
+      .title-area h1 {
+        font-size: 1.2rem;
+      }
+
+      .title-area p {
+        font-size: 0.82rem;
+      }
+
+      .actions {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+      }
+
+      .whatsapp-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div class="logo-wrap">
+        <img src="logo.png" alt="Faella Crafts logo" />
+      </div>
+      <div class="title-area">
+        <h1>Faella Crafts</h1>
+        <p>Custom orders information</p>
+      </div>
+    </header>
+
+    <section class="content">
+      <h2>How our made-to-order pieces work</h2>
+      <p>
+        Any custom order that is not currently in stock usually takes
+        <strong>10 to 15 days</strong> to be completed, including the shipping
+        time. The exact time may vary depending on the number of items in your
+        order.
+      </p>
+
+      <div class="highlight-box">
+        <span class="highlight-label">Time estimates</span>
+        <p>
+          On average, we estimate around <strong>one week of work for each
+          piece</strong>, as every item is carefully handmade with attention to
+          detail.
+        </p>
+      </div>
+
+      <p>
+        After receiving your request, we will review the quantity and type of
+        products you selected and then contact you with a
+        <strong>personalized timeframe</strong> for your order.
+      </p>
+
+      <ul class="list">
+        <li>Production and shipping usually take 10–15 days in total.</li>
+        <li>The more pieces you order, the longer the production time may be.</li>
+        <li>We will always confirm the estimated date with you before starting.</li>
+      </ul>
+
+      <p class="footer-note">
+        If you have any questions, special requests, or need your order for a
+        specific date, please talk to us so we can check what is possible.
+      </p>
+    </section>
+
+    <div class="actions">
+      <a href="index.html" class="back-link">
+        <span>←</span> Back to shop
+      </a>
+
+      <a
+        class="whatsapp-btn"
+        href="https://wa.me/353892116252"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span>💬</span>
+        More information
+      </a>
+    </div>
+  </main>
+</body>
+</html>
