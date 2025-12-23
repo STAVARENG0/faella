@@ -596,15 +596,25 @@
     }
 
     .product-image {
+      position: relative;
       background: #fff;
       padding: 0;
       text-align: center;
+      overflow: hidden;
+    }
+
+    .product-image::before {
+      content: "";
+      display: block;
+      padding-top: 100%; /* 1:1 aspect ratio, like 1080x1080 */
     }
 
     .product-image img {
+      position: absolute;
+      inset: 0;
       width: 100%;
-      max-width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
       display: block;
     }
 
@@ -708,6 +718,11 @@
       box-shadow: 0 22px 50px rgba(0,0,0,0.26);
       overflow-y: auto;
       overflow-x: hidden;
+      scrollbar-width: none; /* Firefox - hide scrollbar */
+    }
+
+    .product-modal::-webkit-scrollbar {
+      display: none; /* WebKit - hide scrollbar */
     }
 
     .product-modal::before {
@@ -840,6 +855,11 @@
       max-height: 180px;
       overflow-y: auto;
       padding-right: 4px;
+      scrollbar-width: none; /* Firefox - hide scrollbar */
+    }
+
+    .product-modal-description::-webkit-scrollbar {
+      display: none; /* WebKit - hide scrollbar */
     }
 
     .product-modal-actions {
