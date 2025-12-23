@@ -827,18 +827,24 @@
     const container = $("editPreview");
     if(!container) return;
     container.innerHTML = '';
-    const existing = [p.image, ...(p.gallery||[])].filter(Boolean);
-    editExistingCount = existing.length;
-    editImageList = [
-      ...existing.map(u => ({kind:'existing', url:u})),
-      ...editPendingUploads.map(x => ({kind:'new', url:x.url, file:x.file}))
-    ];
+
+    // inicializa a lista de imagens na primeira vez
+    if(!Array.isArray(editImageList) || !editImageList.length){
+      const existing = [p.image, ...(p.gallery||[])].filter(Boolean);
+      editExistingCount = existing.length;
+      editImageList = [
+        ...existing.map(u => ({kind:'existing', url:u})),
+        ...editPendingUploads.map(x => ({kind:'new', url:x.url, file:x.file}))
+      ];
+    }else{
+      // recalcula a contagem de imagens existentes com base na lista atual
+      editExistingCount = editImageList.filter(img => img.kind === 'existing').length;
+    }
+
     editImageList.forEach((img, idx) => {
       const div = document.createElement('div');
       div.className = 'preview';
-      const removeBtn = img.kind === 'new'
-        ? '<button type="button" class="remove" data-remove="'+idx+'">x</button>'
-        : '';
+      const removeBtn = '<button type="button" class="remove" data-remove="'+idx+'">x</button>';
       div.innerHTML = `
         <input type="radio" name="editCapa" value="${idx}">
         <img src="${img.url}" alt="img">
@@ -853,15 +859,38 @@
     container.querySelectorAll('.remove').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.getAttribute('data-remove'));
-        const pendingIdx = idx - editExistingCount;
-        if(pendingIdx >= 0){
-          editPendingUploads.splice(pendingIdx, 1);
-          renderEditImages(p);
+        if(isNaN(idx) || idx < 0 || idx >= editImageList.length) return;
+        const img = editImageList[idx];
+
+        if(img && img.kind === 'new'){
+          // também remove da fila de uploads pendentes
+          editPendingUploads = editPendingUploads.filter(x => x.url !== img.url);
         }
+        // remove da lista de edição (funciona para novas e existentes)
+        editImageList.splice(idx, 1);
+
+        renderEditImages(p);
       });
     });
   }
 
+  function editarProduto(index){
+    editIndex = index;
+    const p = produtos[index];
+    if(!p) return;
+    $("editIdBadge").textContent = p.id ? `ID: ${p.id}` : '';
+    $("editTitulo").value = p.title || '';
+    $("editValor").value = Number(p.price || 0);
+    $("editDescricao").value = p.description || '';
+    $("editCategoria").value = p.category || '';
+    $("editEstoque").value = Number.isFinite(p.stock) ? p.stock : parseInt(p.stock || '0', 10);
+
+    editPendingUploads = [];
+    editImageList = [];
+    editExistingCount = 0;
+    renderEditImages(p);
+    openEditModal();
+  }
   function editarProduto(index){
     editIndex = index;
     const p = produtos[index];
@@ -883,7 +912,10 @@
     const p = produtos[editIndex];
     files.forEach(f => {
       const url = URL.createObjectURL(f);
-      editPendingUploads.push({file:f, url});
+      const entry = {file:f, url};
+      editPendingUploads.push(entry);
+      if(!Array.isArray(editImageList)) editImageList = [];
+      editImageList.push({kind:'new', url, file:f});
     });
     if(p) renderEditImages(p);
     e.target.value = '';
@@ -900,13 +932,26 @@
 
     try{
       const p = produtos[editIndex];
+      if(!p) throw new Error('Produto não encontrado para edição.');
+
       let newUrls = [];
       if(editPendingUploads.length){
         newUrls = await uploadImagens(p.id || p.ID || Date.now().toString(), editPendingUploads.map(x=>x.file));
       }
-      const existing = [p.image, ...(p.gallery||[])].filter(Boolean);
-      const images = [...existing, ...newUrls].filter(Boolean)
-        .filter((u, idx, arr) => arr.indexOf(u) === idx);
+
+      // Monta a lista final de imagens com base na ordem atual do editor
+      let newIdx = 0;
+      const images = (editImageList || [])
+        .map(img => {
+          if(img.kind === 'existing'){
+            return img.url;
+          }else{
+            const url = newUrls[newIdx] || null;
+            newIdx++;
+            return url;
+          }
+        })
+        .filter(Boolean);
 
       const sel = parseInt(document.querySelector('input[name="editCapa"]:checked')?.value || '0', 10);
       const selIdx = Math.max(0, Math.min(sel, images.length - 1));
