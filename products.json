@@ -93,17 +93,5 @@
     ],
     "createdAt": 1766183451153,
     "status": "published"
-  },
-  {
-    "id": "1767692743507",
-    "title": "TESTE DO CARTAO",
-    "price": 1,
-    "description": "OI TESTE",
-    "category": "Dolls",
-    "stock": 1,
-    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1767692743507/Gemini_Generated_Image_qhq7nyqhq7nyqhq7.png",
-    "gallery": [],
-    "createdAt": 1767692746098,
-    "status": "published"
   }
 ]
