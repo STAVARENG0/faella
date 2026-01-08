@@ -101,7 +101,10 @@
     "category": "Animals",
     "stock": 2,
     "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1767879055809/coelho branco 0.jpg",
-    "gallery": [],
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1767879055809/coelho azul0= 0.jpg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1767879055809/coelho azul 1.jpg"
+    ],
     "createdAt": 1767879057302,
     "status": "published"
   }
