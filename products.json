@@ -92,5 +92,17 @@
     ],
     "createdAt": 1766183451153,
     "status": "published"
+  },
+  {
+    "id": "1767879055809",
+    "title": "rabbits",
+    "price": 36.99,
+    "description": "Rabbit made with cotton thread with safety lock eyes. Approximately 22 cm.",
+    "category": "Animals",
+    "stock": 2,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1767879055809/coelho branco 0.jpg",
+    "gallery": [],
+    "createdAt": 1767879057302,
+    "status": "published"
   }
 ]
