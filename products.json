@@ -116,7 +116,12 @@
     "category": "Keychains",
     "stock": 4,
     "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768084915616/(Upload-from-mobile-1768084373)cf5c3477-7b42-44e8-b6e4-d2a56d9ee146.jpeg",
-    "gallery": [],
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768084915616/(Upload-from-mobile-1768084373)360a8c72-f520-408b-abb4-2af6d701e1bf.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768084915616/(Upload-from-mobile-1768084373)50eea670-7596-4c1d-8794-f511f5e6f05f.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768084915616/(Upload-from-mobile-1768084437)4245fc2b-24e4-400b-b352-86343eab9703.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768084915616/(Upload-from-mobile-1768084437)22d5df88-b7bd-4f9b-a176-5cd160b46491.jpeg"
+    ],
     "createdAt": 1768084917374,
     "status": "published"
   }
