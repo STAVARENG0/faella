@@ -107,5 +107,17 @@
     ],
     "createdAt": 1767879057302,
     "status": "published"
+  },
+  {
+    "id": "1768084915616",
+    "title": "Delicate keychain",
+    "price": 14.99,
+    "description": "Made with 100% cotton yarn. A delicate keychain. \nApprox. 10 cm.\nappx.150g\n",
+    "category": "Keychains",
+    "stock": 4,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768084915616/(Upload-from-mobile-1768084373)cf5c3477-7b42-44e8-b6e4-d2a56d9ee146.jpeg",
+    "gallery": [],
+    "createdAt": 1768084917374,
+    "status": "published"
   }
 ]
