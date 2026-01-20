@@ -140,5 +140,19 @@
     ],
     "createdAt": 1768948455694,
     "status": "published"
+  },
+  {
+    "id": "1768948950121",
+    "title": "Shiny penguin",
+    "price": 11.99,
+    "description": "Handmade penguin keychain made with 100% cotton yarn.\n Glows in the dark.",
+    "category": "Keychains",
+    "stock": 10,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768948950121/IMG_0356.jpeg",
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768948950121/IMG_0353.jpeg"
+    ],
+    "createdAt": 1768948960378,
+    "status": "published"
   }
 ]
