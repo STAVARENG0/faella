@@ -124,5 +124,21 @@
     ],
     "createdAt": 1768084917374,
     "status": "published"
+  },
+  {
+    "id": "1768948448358",
+    "title": "little puppy",
+    "price": 39.99,
+    "description": "Small puppy, handmade with acrylic and cotton yarn. Made to be your best friend.\nIncludes a little outfit.",
+    "category": "Bears",
+    "stock": 2,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768948448358/IMG_0343.jpeg",
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768948448358/IMG_0344.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768948448358/IMG_0345.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1768948448358/IMG_0346.jpeg"
+    ],
+    "createdAt": 1768948455694,
+    "status": "published"
   }
 ]
