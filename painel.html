@@ -127,8 +127,6 @@
 </head>
 <body>
 <h1>Faella Crafts — Painel Admin</h1>
-<button class="config-btn" id="openGithubModal">Configurações do GitHub</button>
-
 <div class="container">
   <div class="form-section">
     <form class="form" id="formProduto">
@@ -219,30 +217,6 @@
 
 </div>
 
-<!-- GitHub Config Modal -->
-<div class="modal" id="githubModal">
-  <div class="modal-content">
-    <button id="closeGithubModal" style="position:absolute; top:10px; right:10px; background:var(--orange); border:none; color:#fff; padding:6px 12px; border-radius:6px; cursor:pointer;">X</button>
-    <h2 style="margin-bottom:14px; color:var(--orange);">Configurações do GitHub</h2>
-    <label>Repositório (owner/repo)</label>
-    <input id="ghRepo" placeholder="ex.: usuario/repositorio" style="width:100%; margin-bottom:10px;" type="text"/>
-    <label>Branch</label>
-    <input id="ghBranch" placeholder="main" style="width:100%; margin-bottom:10px;" type="text"/>
-    <label>Caminho do arquivo</label>
-    <input id="ghPath" placeholder="products.json" style="width:100%; margin-bottom:10px;" type="text"/>
-    <label>Caminho do arquivo da propaganda</label>
-    <input id="ghHeroPath" placeholder="hero.json" style="width:100%; margin-bottom:10px;" type="text"/>
-    <label>Personal Access Token</label>
-    <input id="ghToken" placeholder="ghp_xxx" style="width:100%; margin-bottom:16px;" type="password"/>
-    <div style="display:flex; gap:10px; justify-content:flex-end; margin-bottom:10px; flex-wrap: wrap;">
-      <button id="saveGithubConfig">Salvar</button>
-      <button id="testGithubConfig">Testar</button>
-      <button id="downloadProducts" title="Baixar products.json">Baixar products.json</button>
-    </div>
-    <div id="ghAlert" class="help" style="margin-top:10px; display:none; padding:8px; border-radius:6px; text-align:center;"></div>
-  </div>
-</div>
-
 <!-- Edit Modal -->
 <div class="modal" id="editModal">
   <div class="modal-content">
@@ -294,581 +268,358 @@
 </div>
 
 <!-- All scripts are placed LAST to ensure elements exist -->
+
 <script>
 (function(){
   'use strict';
-
-  // --- Utilities ---
   const $ = (id) => document.getElementById(id);
   const on = (el, ev, cb) => el && el.addEventListener(ev, cb);
-  const text = (el, t) => { if(el) el.textContent = t; };
 
-  function decodeBase64Utf8(b64){
-    try{
-      b64 = (b64 || '').replace(/\\n/g,'');
-      if('TextDecoder' in window){
-        const bin = atob(b64);
-        const bytes = new Uint8Array(bin.length);
-        for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-        return new TextDecoder().decode(bytes);
-      }
-      return decodeURIComponent(escape(atob(b64 || '')));
-    }catch(e){ return atob(b64 || ''); }
-  }
-  function encodeBase64Utf8(str){
-    try{
-      if('TextEncoder' in window){
-        const bytes = new TextEncoder().encode(str);
-        let bin = '';
-        bytes.forEach(b => bin += String.fromCharCode(b));
-        return btoa(bin);
-      }
-      return btoa(unescape(encodeURIComponent(str)));
-    }catch(e){ return btoa(str || ''); }
+  // --- helpers ---
+  async function api(path, opts){
+    const res = await fetch(path, Object.assign({
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    }, opts || {}));
+    if(res.status === 401){
+      // não logado
+      window.location.href = '/login-adm.html';
+      return null;
+    }
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      throw new Error('Erro ' + res.status + (txt ? (': ' + txt) : ''));
+    }
+    return res;
   }
 
-  // --- State ---
+  function money(n){
+    return '€ ' + (Number(n||0)).toFixed(2);
+  }
+
+  function safeInt(v){
+    const n = parseInt(String(v||'0'), 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  // --- state ---
   let produtos = [];
   let editIndex = null;
-  let editPendingUploads = []; // {file, url}
-  let editImageList = [];
-  let editExistingCount = 0;
+  let editPendingUploads = []; // File[]
+  let editImageList = []; // {kind:'existing'|'new', url, file?}
 
-  // Hero / capa do topo
+  // Hero background (opcional)
   let heroBgImage = '';
   let heroBgFile = null;
   let heroBgShouldClear = false;
 
-  // --- GitHub helpers ---
-  async function carregarProdutosGitHub(){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(!cfg.repo || !cfg.branch || !cfg.path || !cfg.token) return;
-    try {
-      const res = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}?ref=${cfg.branch}`, {
-        headers: { Authorization: `token ${cfg.token}` }
-      });
-      if(res.ok){
-        const data = await res.json();
-        const raw = decodeBase64Utf8(data.content || '');
-        produtos = JSON.parse(raw || '[]');
-        renderProdutos();
-      }
-    } catch(e){
-      console.error("Error loading products:", e);
+  // --- Auth guard: se a página abriu sem login, o backend já bloqueia.
+  // Ainda assim, se der 401 em qualquer chamada, redireciona.
+
+  // --- Upload (produto) ---
+  async function uploadOneImage(productId, file){
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('productId', productId);
+    const res = await fetch('/api/upload/product-image', { method:'POST', body: fd, credentials:'include' });
+    if(res.status === 401){ window.location.href='/login-adm.html'; return null; }
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      throw new Error('Falha ao enviar imagem: ' + res.status + (txt ? (': '+txt) : ''));
+    }
+    const data = await res.json();
+    return data.url;
+  }
+
+  async function uploadManyImages(productId, files){
+    const urls = [];
+    for(const f of files){
+      const u = await uploadOneImage(productId, f);
+      if(u) urls.push(u);
+    }
+    return urls;
+  }
+
+  // --- Products API ---
+  async function carregarProdutos(){
+    const res = await api('/api/products', { method:'GET', headers: {} });
+    if(!res) return;
+    produtos = await res.json();
+    if(!Array.isArray(produtos)) produtos = [];
+    renderProdutos();
+  }
+
+  async function salvarProdutos(){
+    await api('/api/products', { method:'PUT', body: JSON.stringify({ products: produtos }) });
+    // recarrega pra garantir consistência
+    await carregarProdutos();
+    const box = $('alertBox');
+    if(box){
+      box.textContent = '✅ Produto(s) salvo(s)!';
+      box.style.display = 'block';
+      setTimeout(()=> box.style.display='none', 2500);
     }
   }
 
-  async function salvarNoGitHub(produtosNovos){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(!cfg.repo || !cfg.branch || !cfg.path || !cfg.token){
-      alert("Preencha as configurações do GitHub primeiro.");
-      return false;
-    }
-    const url = `https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}`;
-    let sha = null;
-
-    try {
-      const res = await fetch(url+`?ref=${cfg.branch}`, {
-        headers: { "Authorization": `token ${cfg.token}`, "Accept": "application/vnd.github+json" }
-      });
-      if(res.ok){
-        const data = await res.json();
-        sha = data.sha;
-      }
-    } catch(e){ console.error("Error getting SHA:", e); }
-
-    produtosNovos = (produtosNovos || []).map(p => ({
-      ...p,
-      title: p.title ?? 'Untitled',
-      description: p.description ?? '',
-      category: p.category || 'uncategorized',
-      price: Number(p.price || 0),
-      stock: Number.isFinite(p.stock) ? p.stock : parseInt(p.stock || '0', 10),
-      gallery: (Array.isArray(p.gallery) ? p.gallery.filter(Boolean) : (p.gallery ? [p.gallery] : [])).filter(u => u && u !== p.image).filter((u, idx, arr) => arr.indexOf(u) === idx),
-      image: p.image || '',
-      createdAt: p.createdAt || Date.now(),
-      status: p.status || 'published',
-      id: p.id || String(p.ID || Date.now())
-    }));
-
-    const novoConteudo = encodeBase64Utf8(JSON.stringify(produtosNovos, null, 2));
-    const body = { message: "Update products.json via panel", branch: cfg.branch, content: novoConteudo };
-    if(sha) body.sha = sha;
-
-    try {
-      const putRes = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Authorization": `token ${cfg.token}`,
-          "Accept": "application/vnd.github+json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-      });
-
-      if(putRes.ok){
-        const box = $("alertBox");
-        if(box){
-          box.textContent = "✅ Enviado — publicação concluída!";
-          box.classList.add("success");
-          box.style.display = "block";
-          setTimeout(()=> box.style.display="none", 3000);
-        }
-        try { await carregarProdutosGitHub(); } catch(_) {}
-        return true;
-      } else {
-        const txt = await putRes.text().catch(()=> "");
-        alert("Erro ao salvar no GitHub: " + putRes.status + (txt ? "\\n" + txt : ""));
-        return false;
-      }
-    } catch(e){
-      alert("Erro ao salvar no GitHub: " + e.message);
-      return false;
-    }
+  // --- Hero API ---
+  function fillHeroForm(data){
+    if(!data) return;
+    if($('heroLabel')) $('heroLabel').value = data.label || '';
+    if($('heroTitle')) $('heroTitle').value = data.title || '';
+    if($('heroSub')) $('heroSub').value = data.sub || '';
+    if($('heroBadge')) $('heroBadge').value = data.badge || '';
+    if($('heroCardTitle')) $('heroCardTitle').value = data.cardTitle || '';
+    if($('heroCardSub')) $('heroCardSub').value = data.cardSub || '';
+    if($('heroCardDate')) $('heroCardDate').value = data.cardDate || '';
   }
 
-  async function uploadImagens(produtoId, files){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    const uploadedLinks = [];
-    for(let i=0; i<files.length; i++){
-      const file = files[i];
-      const reader = new FileReader();
-      const base64 = await new Promise(res=>{
-        reader.onload = () => res(reader.result.split(",")[1]);
-        reader.readAsDataURL(file);
-      });
-
-      const imgPath = `products/${produtoId}/${file.name.replace(/\\s+/g,'_')}`;
-      const url = `https://api.github.com/repos/${cfg.repo}/contents/${imgPath}`;
-      await fetch(url, {
-        method: "PUT",
-        headers: { "Authorization": `token ${cfg.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `Add image ${file.name} of product ${produtoId}`,
-          branch: cfg.branch,
-          content: base64
-        })
-      });
-
-      uploadedLinks.push(`https://raw.githubusercontent.com/${cfg.repo}/${cfg.branch}/${imgPath}`);
-    }
-    return uploadedLinks;
-  }
-
-  async function downloadProductsJson(){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    let content = null;
-    if(produtos && produtos.length){
-      content = JSON.stringify(produtos, null, 2);
-    } else if(cfg.repo && cfg.branch && cfg.path && cfg.token){
-      try{
-        const res = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}?ref=${cfg.branch}`, {
-          headers: { Authorization: `token ${cfg.token}` }
-        });
-        if(res.ok){
-          const data = await res.json();
-          content = decodeBase64Utf8(data.content || '');
-        } else {
-          content = '[]';
-        }
-      }catch(e){ content = '[]'; }
-    } else {
-      content = '[]';
-    }
-
-    const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'products.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 1000);
-  }
-
-  // --- Hero (propaganda) helpers ---
-  function getHeroConfigFromForm(){
+  function getHeroFromForm(){
     return {
-      label: $("heroLabel") ? $("heroLabel").value.trim() : "",
-      title: $("heroTitle") ? $("heroTitle").value.trim() : "",
-      sub: $("heroSub") ? $("heroSub").value.trim() : "",
-      badge: $("heroBadge") ? $("heroBadge").value.trim() : "",
-      cardTitle: $("heroCardTitle") ? $("heroCardTitle").value.trim() : "",
-      cardSub: $("heroCardSub") ? $("heroCardSub").value.trim() : "",
-      cardDate: $("heroCardDate") ? $("heroCardDate").value.trim() : ""
+      label: $('heroLabel') ? $('heroLabel').value.trim() : '',
+      title: $('heroTitle') ? $('heroTitle').value.trim() : '',
+      sub: $('heroSub') ? $('heroSub').value.trim() : '',
+      badge: $('heroBadge') ? $('heroBadge').value.trim() : '',
+      cardTitle: $('heroCardTitle') ? $('heroCardTitle').value.trim() : '',
+      cardSub: $('heroCardSub') ? $('heroCardSub').value.trim() : '',
+      cardDate: $('heroCardDate') ? $('heroCardDate').value.trim() : '',
+      bgImage: heroBgImage || ''
     };
   }
 
-  function fillHeroForm(data){
-    if(!data) return;
-    if($("heroLabel")) $("heroLabel").value = data.label || "";
-    if($("heroTitle")) $("heroTitle").value = data.title || "";
-    if($("heroSub")) $("heroSub").value = data.sub || "";
-    if($("heroBadge")) $("heroBadge").value = data.badge || "";
-    if($("heroCardTitle")) $("heroCardTitle").value = data.cardTitle || "";
-    if($("heroCardSub")) $("heroCardSub").value = data.cardSub || "";
-    if($("heroCardDate")) $("heroCardDate").value = data.cardDate || "";
-  }
-
   function updateHeroBgPreview(){
-    const el = $("heroBgPreview");
+    const el = $('heroBgPreview');
     if(!el) return;
-
     if(heroBgFile){
       const url = URL.createObjectURL(heroBgFile);
       el.innerHTML = '<p class="help">Nova capa selecionada — será enviada ao salvar.</p>' +
-        '<img src="' + url + '" alt="Pré-visualização da capa" style="margin-top:6px; max-width:100%; border-radius:8px;">';
+        '<img src="'+url+'" style="margin-top:6px; max-width:100%; border-radius:8px;">';
     } else if(heroBgImage){
       el.innerHTML = '<p class="help">Capa atual:</p>' +
-        '<img src="' + heroBgImage + '" alt="Capa atual" style="margin-top:6px; max-width:100%; border-radius:8px;">';
+        '<img src="'+heroBgImage+'" style="margin-top:6px; max-width:100%; border-radius:8px;">';
     } else {
-      el.innerHTML = '<p class="help">Nenhuma capa definida — o site usa o fundo branco padrão.</p>';
+      el.innerHTML = '<p class="help">Sem capa — fundo branco padrão.</p>';
     }
   }
 
-  async function uploadHeroBgImage(file){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(!cfg.repo || !cfg.branch || !cfg.token){
-      throw new Error('Configure o GitHub primeiro (repo, branch, token) para enviar a capa.');
+  async function uploadHeroBg(file){
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/upload/hero-bg', { method:'POST', body: fd, credentials:'include' });
+    if(res.status === 401){ window.location.href='/login-adm.html'; return null; }
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      throw new Error('Falha ao enviar capa: ' + res.status + (txt ? (': '+txt) : ''));
     }
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async function(){
-        try{
-          const result = String(reader.result || '');
-          const base64 = result.split(',')[1] || '';
-          const safeName = (file.name || 'hero-bg').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_.-]/g,'');
-          const imgPath = `assets/hero-bg-${Date.now()}-${safeName}`;
-          const url = `https://api.github.com/repos/${cfg.repo}/contents/${imgPath}`;
-          const body = {
-            message: `Atualizar imagem de capa ${safeName}`,
-            branch: cfg.branch,
-            content: base64
-          };
-          const res = await fetch(url, {
-            method: 'PUT',
-            headers: {
-              "Authorization": `token ${cfg.token}`,
-              "Accept": "application/vnd.github+json",
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(body)
-          });
-          if(!res.ok){
-            const txt = await res.text().catch(function(){ return ''; });
-            reject(new Error('Erro ao enviar capa: ' + res.status + (txt ? ' - ' + txt : '')));
-            return;
-          }
-          const rawUrl = `https://raw.githubusercontent.com/${cfg.repo}/${cfg.branch}/${imgPath}`;
-          resolve(rawUrl);
-        }catch(err){
-          reject(err);
-        }
-      };
-      reader.onerror = function(){ reject(new Error('Falha ao ler o arquivo de capa.')); };
-      reader.readAsDataURL(file);
-    });
+    const data = await res.json();
+    return data.url;
   }
 
-  async function carregarHeroConfig(){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(!cfg.repo || !cfg.branch || !cfg.token) return;
-    const heroPath = cfg.heroPath || 'hero.json';
-    try{
-      const res = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${heroPath}?ref=${cfg.branch}`, {
-        headers: { Authorization: `token ${cfg.token}` }
-      });
-      if(!res.ok) return;
-      const data = await res.json();
-      const raw = decodeBase64Utf8(data.content || '');
-      const json = JSON.parse(raw || '{}');
-      fillHeroForm(json);
-      heroBgImage = json.bgImage || '';
-      heroBgFile = null;
-      heroBgShouldClear = false;
-      updateHeroBgPreview();
-    }catch(e){
-      console.error('Erro ao carregar hero.json:', e);
-    }
+  async function carregarHero(){
+    const res = await api('/api/hero', { method:'GET', headers: {} });
+    if(!res) return;
+    const hero = await res.json();
+    fillHeroForm(hero);
+    heroBgImage = hero?.bgImage || '';
+    heroBgFile = null;
+    heroBgShouldClear = false;
+    updateHeroBgPreview();
   }
 
-  async function salvarHeroConfig(){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(!cfg.repo || !cfg.branch || !cfg.token){
-      alert('Configure o GitHub primeiro (repo, branch, token).');
-      return;
-    }
-    const heroPath = cfg.heroPath || 'hero.json';
-    const url = `https://api.github.com/repos/${cfg.repo}/contents/${heroPath}`;
-    let sha = null;
-
-    try{
-      const res = await fetch(url+`?ref=${cfg.branch}`, {
-        headers: { "Authorization": `token ${cfg.token}`, "Accept": "application/vnd.github+json" }
-      });
-      if(res.ok){
-        const info = await res.json();
-        sha = info.sha;
-      }
-    }catch(e){
-      console.error('Erro ao buscar SHA do hero.json:', e);
+  async function salvarHero(){
+    const statusEl = $('heroStatus');
+    if(statusEl){
+      statusEl.style.display='block';
+      statusEl.className='alert info';
+      statusEl.textContent='⏳ Salvando propaganda...';
     }
 
-    // Se tiver uma nova imagem selecionada, faz o upload primeiro
     try{
       if(heroBgFile){
-        const uploadedUrl = await uploadHeroBgImage(heroBgFile);
-        heroBgImage = uploadedUrl;
+        const u = await uploadHeroBg(heroBgFile);
+        heroBgImage = u || heroBgImage;
         heroBgFile = null;
         heroBgShouldClear = false;
       }
       if(heroBgShouldClear){
         heroBgImage = '';
       }
-    }catch(e){
-      alert('Erro ao enviar a imagem de capa: ' + (e.message || e));
-      return;
-    }
 
-    const heroData = getHeroConfigFromForm();
-    heroData.bgImage = heroBgImage || '';
+      const hero = getHeroFromForm();
+      await api('/api/hero', { method:'PUT', body: JSON.stringify({ hero }) });
 
-    const content = encodeBase64Utf8(JSON.stringify(heroData, null, 2));
-    const body = {
-      message: 'Update hero.json via panel',
-      branch: cfg.branch,
-      content: content
-    };
-    if(sha) body.sha = sha;
-
-    const statusEl = $("heroStatus");
-    if(statusEl){
-      statusEl.style.display = 'block';
-      statusEl.className = 'alert info';
-      statusEl.textContent = '⏳ Salvando propaganda...';
-    }
-
-    try{
-      const putRes = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          "Authorization": `token ${cfg.token}`,
-          "Accept": "application/vnd.github+json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-      });
-      if(putRes.ok){
-        if(statusEl){
-          statusEl.className = 'alert success';
-          statusEl.textContent = '✅ Propaganda atualizada com sucesso!';
-        }
-      } else {
-        const txt = await putRes.text().catch(function(){ return ''; });
-        if(statusEl){
-          statusEl.className = 'alert error';
-          statusEl.textContent = '❌ Erro ao salvar propaganda: ' + putRes.status;
-        }
-        console.error('Erro ao salvar hero.json:', txt);
-      }
-    }catch(e){
       if(statusEl){
-        statusEl.className = 'alert error';
-        statusEl.textContent = '❌ Falha ao salvar propaganda: ' + (e.message || e);
+        statusEl.className='alert success';
+        statusEl.textContent='✅ Propaganda salva!';
       }
-    } finally {
+      setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 2500);
       updateHeroBgPreview();
+    }catch(err){
+      if(statusEl){
+        statusEl.className='alert error';
+        statusEl.textContent='❌ ' + (err?.message || err);
+      }
     }
   }
 
-  // --- UI rendering ---
-  function renderProdutos() {
-    const lista = $("listaProdutos");
+  // --- Render ---
+  function renderProdutos(){
+    const lista = $('listaProdutos');
     if(!lista) return;
     lista.innerHTML = '';
+
     produtos.forEach((p, i) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${p.title || ''}</td>
-        <td>€ ${Number(p.price || 0).toFixed(2)}</td>
-        <td>${p.category || ''}</td>
-        <td>${Number.isFinite(p.stock) ? p.stock : parseInt(p.stock || '0', 10)}</td>
+        <td>${(p.title||'')}</td>
+        <td>${money(p.price)}</td>
+        <td>${(p.category||'')}</td>
+        <td>${safeInt(p.stock)}</td>
         <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''}</td>
-        <td><div class='action-buttons'><button data-edit="${i}">Editar</button><button data-del="${i}">Excluir</button></div></td>
+        <td><div class="action-buttons">
+          <button data-edit="${i}">Editar</button>
+          <button data-del="${i}">Excluir</button>
+        </div></td>
       `;
       lista.appendChild(tr);
     });
 
-    // bind action buttons using delegation
-    lista.querySelectorAll("[data-edit]").forEach(btn => {
-      on(btn, 'click', () => editarProduto(parseInt(btn.getAttribute('data-edit'))));
+    lista.querySelectorAll('[data-edit]').forEach(btn=>{
+      on(btn, 'click', ()=> editarProduto(parseInt(btn.getAttribute('data-edit'),10)));
     });
-    lista.querySelectorAll("[data-del]").forEach(btn => {
-      on(btn, 'click', async () => {
-        const idx = parseInt(btn.getAttribute('data-del'));
-        if(Number.isInteger(idx)){
-          produtos.splice(idx,1);
-          await salvarNoGitHub(produtos);
-          renderProdutos();
-        }
+    lista.querySelectorAll('[data-del]').forEach(btn=>{
+      on(btn, 'click', async ()=> {
+        const idx = parseInt(btn.getAttribute('data-del'),10);
+        if(!Number.isInteger(idx)) return;
+        if(!confirm('Excluir este produto?')) return;
+        produtos.splice(idx,1);
+        await salvarProdutos();
       });
     });
   }
 
-  // --- Create form ---
-  on($("fotos"), 'change', (e) => {
+  // --- Create product ---
+  on($('fotos'), 'change', (e)=>{
     const files = Array.from(e.target.files || []);
-    const preview = $("preview");
+    const preview = $('preview');
     if(!preview) return;
     preview.innerHTML = '';
-    files.forEach((f, i) => {
+    files.forEach((f, i)=>{
       const url = URL.createObjectURL(f);
       const div = document.createElement('div');
       div.className = 'preview';
-      div.innerHTML = `<input type="radio" name="capa" ${i===0? 'checked' : ''} value="${i}"><img src="${url}" alt="preview">`;
+      div.innerHTML = `<input type="radio" name="capa" ${i===0?'checked':''} value="${i}">
+                       <img src="${url}" alt="preview">`;
       preview.appendChild(div);
     });
   });
 
-  on($("formProduto"), 'submit', async (e) => {
+  on($('formProduto'), 'submit', async (e)=>{
     e.preventDefault();
-    const addBtn = $("addBtn");
-    const statusMessage = $("statusMessage");
-    const alertBox = $("alertBox");
 
-    const titulo = $("titulo").value;
-    const valor = Number($("valor").value || 0);
-    const descricao = $("descricao").value;
-    const categoria = $("categoria").value;
-    const estoque = parseInt($("estoque").value || '0', 10);
+    const addBtn = $('addBtn');
+    const statusMessage = $('statusMessage');
+    const alertBox = $('alertBox');
 
-    const fotosInput = $("fotos");
     const produtoId = Date.now().toString();
-    const fotos = fotosInput.files || [];
-    const capaIndex = parseInt(document.querySelector('input[name="capa"]:checked')?.value || 0);
+    const fotosInput = $('fotos');
+    const files = Array.from(fotosInput?.files || []);
+    const capaIndex = parseInt(document.querySelector('input[name="capa"]:checked')?.value || '0', 10);
 
     if(statusMessage){
-      text(statusMessage, '⏳ Enviando...');
-      statusMessage.className = 'alert info';
-      statusMessage.style.display = 'block';
+      statusMessage.style.display='block';
+      statusMessage.className='alert info';
+      statusMessage.textContent='⏳ Enviando...';
     }
-    if(alertBox) alertBox.style.display = 'none';
-    if(addBtn){ addBtn.disabled = true; addBtn.textContent = 'Enviando...'; }
+    if(alertBox) alertBox.style.display='none';
+    if(addBtn){ addBtn.disabled=true; addBtn.textContent='Enviando...'; }
 
-    try {
-      const uploaded = await uploadImagens(produtoId, fotos);
+    try{
+      let uploaded = [];
+      if(files.length){
+        uploaded = await uploadManyImages(produtoId, files);
+      }
 
-      const cover = uploaded[capaIndex] || "";
-      const galleryClean = (uploaded || [])
-        .filter(Boolean)
-        .filter((u, i) => i !== capaIndex)
-        .filter((u, idx, arr) => arr.indexOf(u) === idx);
-      const produto = {
+      const cover = uploaded[capaIndex] || '';
+      const gallery = uploaded.filter((u,i)=> i!==capaIndex);
+
+      const p = {
         id: produtoId,
-        title: titulo,
-        price: valor,
-        description: descricao,
-        category: categoria,
-        stock: estoque,
+        title: $('titulo').value,
+        price: Number($('valor').value || 0),
+        description: $('descricao').value || '',
+        category: $('categoria').value,
+        stock: safeInt($('estoque').value),
         image: cover,
-        gallery: galleryClean,
+        gallery: gallery,
         createdAt: Date.now(),
-        status: "published"
+        status: 'published'
       };
 
-      produtos.push(produto);
-      const ok = await salvarNoGitHub(produtos);
-      if(ok){
-        if(statusMessage) statusMessage.style.display = 'none';
-        $("formProduto").reset();
-        $("preview").innerHTML = '';
-        renderProdutos();
-      } else {
-        if(statusMessage){
-          text(statusMessage, '❌ Erro ao enviar. Verifique a configuração do GitHub.');
-          statusMessage.className = 'alert error';
-          statusMessage.style.display = 'block';
-        }
-      }
-    } catch(e){
+      produtos.push(p);
+      await salvarProdutos();
+
+      $('formProduto').reset();
+      if($('preview')) $('preview').innerHTML = '';
+      if(statusMessage) statusMessage.style.display='none';
+    }catch(err){
       if(statusMessage){
-        text(statusMessage, '❌ Falha: ' + (e.message || e));
-        statusMessage.className = 'alert error';
-        statusMessage.style.display = 'block';
+        statusMessage.className='alert error';
+        statusMessage.textContent='❌ ' + (err?.message || err);
       }
-    } finally {
-      if(addBtn){ addBtn.disabled = false; addBtn.textContent = 'Adicionar produto'; }
-      if(statusMessage && statusMessage.classList.contains('info')){
-        setTimeout(()=> statusMessage.style.display='none', 3000);
-      }
+    }finally{
+      if(addBtn){ addBtn.disabled=false; addBtn.textContent='Adicionar produto'; }
     }
   });
 
-  // --- Editor modal logic ---
+  // --- Edit modal ---
   function openEditModal(){
-    $("editModal").classList.add('show');
+    $('editModal').classList.add('show');
     document.body.classList.add('modal-open');
   }
   function closeEditModal(){
-    $("editModal").classList.remove('show');
+    $('editModal').classList.remove('show');
     document.body.classList.remove('modal-open');
     editIndex = null;
     editPendingUploads = [];
     editImageList = [];
-    editExistingCount = 0;
-    const f = $("editForm");
+    const f = $('editForm');
     if(f) f.reset();
-    const p = $("editPreview");
+    const p = $('editPreview');
     if(p) p.innerHTML = '';
   }
 
   function renderEditImages(p){
-    const container = $("editPreview");
+    const container = $('editPreview');
     if(!container) return;
     container.innerHTML = '';
 
-    // inicializa a lista de imagens na primeira vez
-    if(!Array.isArray(editImageList) || !editImageList.length){
+    if(!Array.isArray(editImageList) || editImageList.length === 0){
       const existing = [p.image, ...(p.gallery||[])].filter(Boolean);
-      editExistingCount = existing.length;
-      editImageList = [
-        ...existing.map(u => ({kind:'existing', url:u})),
-        ...editPendingUploads.map(x => ({kind:'new', url:x.url, file:x.file}))
-      ];
-    }else{
-      // recalcula a contagem de imagens existentes com base na lista atual
-      editExistingCount = editImageList.filter(img => img.kind === 'existing').length;
+      editImageList = existing.map(u => ({kind:'existing', url:u}));
     }
 
-    editImageList.forEach((img, idx) => {
+    editImageList.forEach((img, idx)=>{
       const div = document.createElement('div');
-      div.className = 'preview';
-      const removeBtn = '<button type="button" class="remove" data-remove="'+idx+'">x</button>';
+      div.className='preview';
       div.innerHTML = `
         <input type="radio" name="editCapa" value="${idx}">
         <img src="${img.url}" alt="img">
-        ${removeBtn}
+        <button type="button" class="remove" data-remove="${idx}">x</button>
       `;
       container.appendChild(div);
     });
 
-    const radio = container.querySelector('input[name="editCapa"][value="0"]');
-    if(radio) radio.checked = true;
+    const first = container.querySelector('input[name="editCapa"][value="0"]');
+    if(first) first.checked = true;
 
-    container.querySelectorAll('.remove').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.getAttribute('data-remove'));
-        if(isNaN(idx) || idx < 0 || idx >= editImageList.length) return;
+    container.querySelectorAll('.remove').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = parseInt(btn.getAttribute('data-remove'),10);
         const img = editImageList[idx];
-
-        if(img && img.kind === 'new'){
-          // também remove da fila de uploads pendentes
-          editPendingUploads = editPendingUploads.filter(x => x.url !== img.url);
+        if(img?.kind === 'new'){
+          editPendingUploads = editPendingUploads.filter(f => f !== img.file);
         }
-        // remove da lista de edição (funciona para novas e existentes)
-        editImageList.splice(idx, 1);
-
+        editImageList.splice(idx,1);
         renderEditImages(p);
       });
     });
@@ -878,192 +629,105 @@
     editIndex = index;
     const p = produtos[index];
     if(!p) return;
-    $("editIdBadge").textContent = p.id ? `ID: ${p.id}` : '';
-    $("editTitulo").value = p.title || '';
-    $("editValor").value = Number(p.price || 0);
-    $("editDescricao").value = p.description || '';
-    $("editCategoria").value = p.category || '';
-    $("editEstoque").value = Number.isFinite(p.stock) ? p.stock : parseInt(p.stock || '0', 10);
+
+    $('editIdBadge').textContent = p.id ? ('ID: ' + p.id) : '';
+    $('editTitulo').value = p.title || '';
+    $('editValor').value = Number(p.price || 0);
+    $('editDescricao').value = p.description || '';
+    $('editCategoria').value = p.category || '';
+    $('editEstoque').value = safeInt(p.stock);
 
     editPendingUploads = [];
     editImageList = [];
-    editExistingCount = 0;
-    renderEditImages(p);
-    openEditModal();
-  }
-  function editarProduto(index){
-    editIndex = index;
-    const p = produtos[index];
-    if(!p) return;
-    $("editIdBadge").textContent = p.id ? `ID: ${p.id}` : '';
-    $("editTitulo").value = p.title || '';
-    $("editValor").value = Number(p.price || 0);
-    $("editDescricao").value = p.description || '';
-    $("editCategoria").value = p.category || '';
-    $("editEstoque").value = Number.isFinite(p.stock) ? p.stock : parseInt(p.stock || '0', 10);
-
-    editPendingUploads = [];
     renderEditImages(p);
     openEditModal();
   }
 
-  on($("editFotos"), 'change', (e) => {
+  on($('editFotos'), 'change', (e)=>{
     const files = Array.from(e.target.files || []);
     const p = produtos[editIndex];
-    files.forEach(f => {
+    files.forEach(f=>{
       const url = URL.createObjectURL(f);
-      const entry = {file:f, url};
-      editPendingUploads.push(entry);
-      if(!Array.isArray(editImageList)) editImageList = [];
+      editPendingUploads.push(f);
       editImageList.push({kind:'new', url, file:f});
     });
     if(p) renderEditImages(p);
     e.target.value = '';
   });
 
-  on($("editCancel"), 'click', (e)=>{ e.preventDefault(); closeEditModal(); });
-  on($("editCloseBtn"), 'click', (e)=>{ e.preventDefault(); closeEditModal(); });
+  on($('editCancel'), 'click', (e)=>{ e.preventDefault(); closeEditModal(); });
+  on($('editCloseBtn'), 'click', (e)=>{ e.preventDefault(); closeEditModal(); });
 
-  on($("editForm"), 'submit', async (e) => {
+  on($('editForm'), 'submit', async (e)=>{
     e.preventDefault();
     if(editIndex === null) return;
-    const saveBtn = $("editSave");
-    if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Salvando...'; }
+
+    const saveBtn = $('editSave');
+    if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='Salvando...'; }
 
     try{
       const p = produtos[editIndex];
-      if(!p) throw new Error('Produto não encontrado para edição.');
+      if(!p) throw new Error('Produto não encontrado.');
 
+      // envia novas imagens (se tiver)
       let newUrls = [];
       if(editPendingUploads.length){
-        newUrls = await uploadImagens(p.id || p.ID || Date.now().toString(), editPendingUploads.map(x=>x.file));
+        newUrls = await uploadManyImages(p.id || Date.now().toString(), editPendingUploads);
       }
 
-      // Monta a lista final de imagens com base na ordem atual do editor
+      // constrói lista final
       let newIdx = 0;
       const images = (editImageList || [])
         .map(img => {
-          if(img.kind === 'existing'){
-            return img.url;
-          }else{
-            const url = newUrls[newIdx] || null;
-            newIdx++;
-            return url;
-          }
+          if(img.kind === 'existing') return img.url;
+          const u = newUrls[newIdx] || null;
+          newIdx++;
+          return u;
         })
         .filter(Boolean);
 
       const sel = parseInt(document.querySelector('input[name="editCapa"]:checked')?.value || '0', 10);
       const selIdx = Math.max(0, Math.min(sel, images.length - 1));
 
-      p.title = $("editTitulo").value;
-      p.price = Number($("editValor").value || 0);
-      p.description = $("editDescricao").value || '';
-      p.category = $("editCategoria").value || '';
-      p.stock = parseInt($("editEstoque").value || '0', 10);
+      p.title = $('editTitulo').value;
+      p.price = Number($('editValor').value || 0);
+      p.description = $('editDescricao').value || '';
+      p.category = $('editCategoria').value || '';
+      p.stock = safeInt($('editEstoque').value);
 
       p.image = images[selIdx] || images[0] || '';
-      p.gallery = images.filter((u, i) => i !== selIdx);
+      p.gallery = images.filter((u,i)=> i!==selIdx);
 
-      const ok = await salvarNoGitHub(produtos);
-      if(ok){
-        renderProdutos();
-        closeEditModal();
-      }else{
-        alert('Erro ao salvar no GitHub.');
-      }
+      await salvarProdutos();
+      closeEditModal();
     }catch(err){
       alert('Falha ao salvar: ' + (err?.message || err));
     }finally{
-      if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Salvar'; }
+      if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='Salvar'; }
     }
   });
 
-  // --- GitHub modal bindings ---
-  const ghModal = $("githubModal");
-  on($("openGithubModal"), 'click', () => {
-    loadGithubConfig();
-    ghModal.classList.add('show');
-    document.body.classList.add('modal-open');
-    carregarProdutosGitHub();
-    carregarHeroConfig();
-  });
-  on($("closeGithubModal"), 'click', () => {
-    ghModal.classList.remove('show');
-    document.body.classList.remove('modal-open');
-    carregarProdutosGitHub();
-    carregarHeroConfig();
-  });
-
-  function showGhAlert(msg, ok){
-    const el = $("ghAlert");
-    if(!el) return;
-    text(el, msg);
-    el.style.display = 'block';
-    el.style.background = ok ? '#28a745' : '#c0392b';
-    el.style.color = '#fff';
-    setTimeout(()=> el.style.display='none', 3000);
-  }
-  function loadGithubConfig(){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(cfg.repo) $("ghRepo").value = cfg.repo;
-    if(cfg.branch) $("ghBranch").value = cfg.branch;
-    if(cfg.path) $("ghPath").value = cfg.path;
-    if(cfg.heroPath) $("ghHeroPath").value = cfg.heroPath;
-    if(cfg.token) $("ghToken").value = cfg.token;
-    if(!cfg.heroPath && $("ghHeroPath") && !$("ghHeroPath").value){
-      $("ghHeroPath").value = 'hero.json';
-    }
-  }
-  function saveGithubConfig(){
-    const cfg = {
-      repo: $("ghRepo").value,
-      branch: $("ghBranch").value,
-      path: $("ghPath").value,
-      heroPath: $("ghHeroPath") ? $("ghHeroPath").value || 'hero.json' : 'hero.json',
-      token: $("ghToken").value
-    };
-    localStorage.setItem('ghConfig', JSON.stringify(cfg));
-    showGhAlert('✅ Configurações salvas!', true);
-  }
-  async function testGithubConfig(){
-    const cfg = JSON.parse(localStorage.getItem('ghConfig')||'{}');
-    if(!cfg.repo || !cfg.branch || !cfg.path || !cfg.token){ showGhAlert('Preencha todos os campos antes de testar.', false); return; }
-    try{
-      const res = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}?ref=${cfg.branch}`, {
-        headers: { Authorization: `token ${cfg.token}` }
-      });
-      if(res.ok){
-        showGhAlert('✅ Conexão bem-sucedida!', true);
-      } else {
-        showGhAlert('❌ Erro: ' + res.status, false);
-      }
-    }catch(e){ showGhAlert('❌ Falha: ' + e.message, false); }
-  }
-
-  on($("saveGithubConfig"), 'click', saveGithubConfig);
-  on($("testGithubConfig"), 'click', testGithubConfig);
-  on($("downloadProducts"), 'click', downloadProductsJson);
-
-  on($("heroBgFile"), 'change', (e) => {
-    const files = e.target.files || [];
-    heroBgFile = files[0] || null;
+  // --- hero bindings ---
+  on($('heroBgFile'), 'change', (e)=>{
+    heroBgFile = (e.target.files || [])[0] || null;
     heroBgShouldClear = false;
     updateHeroBgPreview();
   });
-  on($("heroBgRemoveBtn"), 'click', () => {
+  on($('heroBgRemoveBtn'), 'click', ()=>{
     heroBgFile = null;
     heroBgImage = '';
     heroBgShouldClear = true;
-    const input = $("heroBgFile");
+    const input = $('heroBgFile');
     if(input) input.value = '';
     updateHeroBgPreview();
   });
-  on($("heroSaveBtn"), 'click', salvarHeroConfig);
+  on($('heroSaveBtn'), 'click', salvarHero);
 
-  // initial load
-  carregarProdutosGitHub();
-  carregarHeroConfig();
-})();</script>
+  // --- init ---
+  carregarProdutos();
+  carregarHero();
+})();
+</script>
+
 </body>
 </html>

@@ -46,13 +46,49 @@
       max-width: 1180px;
       margin: 0 auto;
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
       gap: 1rem;
       text-align: center;
     }
 
-    /* Header */
+    
+    .admin-link{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 12px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.35);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+      white-space: nowrap;
+    }
+
+    .admin-link:hover{
+      background: rgba(255,255,255,0.22);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.14);
+    }
+
+    .admin-link:active{
+      transform: translateY(0);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.12);
+    }
+
+    @media (max-width: 600px){
+      .top-bar-inner{
+        justify-content: center;
+        gap: 10px;
+      }
+    }
+/* Header */
     header {
       border-bottom: 1px solid #f0f0f0;
       background-color: #fff;
@@ -1106,7 +1142,8 @@
   <!-- Top info bar -->
   <div class="top-bar">
     <div class="top-bar-inner">
-      <span>Ireland's most loved yarn shop</span>
+      <span class="top-bar-text">Ireland's most loved yarn shop</span>
+      <a class="admin-link" href="login-adm.html">Admin</a>
     </div>
   </div>
 
