@@ -154,5 +154,19 @@
     ],
     "createdAt": 1768948960378,
     "status": "published"
+  },
+  {
+    "id": "1769158134797",
+    "title": "PROMOCAO ",
+    "price": 1,
+    "description": "teste",
+    "category": "Keychains",
+    "stock": 1,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1769158134797_1769158138619_32489583d860.png",
+    "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1769158134797_1769158136632_2fdb4deff8b8.png"
+    ],
+    "createdAt": 1769158139047,
+    "status": "published"
   }
 ]
