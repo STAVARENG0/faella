@@ -169,19 +169,5 @@
     ],
     "createdAt": 1772474830450,
     "status": "published"
-  },
-  {
-    "id": "1772540441372",
-    "title": "teste",
-    "price": 1,
-    "description": "asfa",
-    "category": "Dolls",
-    "stock": 1,
-    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772540441372_1772540443753_d8d81d17e808.png",
-    "gallery": [
-      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772540441372_1772540441085_813a66b73fa4.png"
-    ],
-    "createdAt": 1772540446709,
-    "status": "published"
   }
 ]
