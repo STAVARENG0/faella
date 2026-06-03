@@ -161,11 +161,14 @@
     "price": 34.99,
     "description": "Made with 55% acrylic, 45% cotton yarn, hand-crocheted and filled with fiberfill. This lovely bunny is approximately 23 cm tall, with safety eyes. Her clothes, shoes, and accessories are removable to make playtime even more special",
     "category": "Animals",
-    "stock": 1,
-    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1772474829258_09cfc7888138.jpeg",
+    "stock": 3,
+    "image": "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1780483155125_c00561475e5e.jpeg",
     "gallery": [
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1772474829258_09cfc7888138.jpeg",
       "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1772474825937_5b72fb818e35.jpeg",
-      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1772474827297_6022bf4315b0.jpeg"
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1772474827297_6022bf4315b0.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1780483158523_4f6524ea53b8.jpeg",
+      "https://raw.githubusercontent.com/STAVARENG0/faella/main/products/1772474825116_1780483161273_6c2078126231.jpeg"
     ],
     "createdAt": 1772474830450,
     "status": "published"
