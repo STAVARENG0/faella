@@ -187,5 +187,19 @@
     ],
     "createdAt": 1773497548880,
     "status": "published"
+  },
+  {
+    "id": "1780909900859",
+    "title": "CHAVEIRO DE BANANA ",
+    "price": 1,
+    "description": "Teste",
+    "category": "Promotions",
+    "stock": 2,
+    "image": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1780909903/faella/products/1780909900859_1780909903247_bf529141797b.png",
+    "gallery": [
+      "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1780909901/faella/products/1780909900859_1780909900637_77921dc24b6c.png"
+    ],
+    "createdAt": 1780909905719,
+    "status": "published"
   }
 ]
