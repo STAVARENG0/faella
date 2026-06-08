@@ -1,12 +1,12 @@
 {
   "hero": {
-    "label": "",
-    "title": "",
-    "sub": "",
-    "badge": "",
-    "cardTitle": "",
-    "cardSub": "",
-    "cardDate": "",
+    "label": "✨ Faella Crafts",
+    "title": "🧸 Handmade Amigurumi Made with Love",
+    "sub": "Each piece is carefully handcrafted with attention to detail, creating unique gifts and keepsakes for every special occasion.",
+    "badge": "🇮🇪 Shipping Across Ireland",
+    "cardTitle": "⭐ Featured Amigurumi",
+    "cardSub": "Discover this week’s highlighted creation and find the perfect handmade gift.",
+    "cardDate": "28/11/2026",
     "bgImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1780909766/faella/hero/hero_bg_5f26e6d971e0_1780909766201.png"
   }
 }
