@@ -639,9 +639,12 @@
     }
 
     .product-footer {
-      padding: 8px 10px 10px;
+      padding: 8px 10px 12px;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
+      gap: 8px;
     }
 
     .btn-buy {
@@ -661,6 +664,50 @@
     .btn-buy:hover {
       background: #18922f;
       transform: translateY(-1px);
+    }
+
+    .btn-share {
+      background: #fff;
+      color: var(--rosa-principal);
+      border: 1px solid rgba(234,194,202,.95);
+      padding: 7px 18px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      box-shadow: 0 6px 14px rgba(0,0,0,.07);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    .btn-share:hover {
+      background: #fff7fb;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,0,0,.11);
+    }
+
+    .share-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(18px);
+      background: rgba(51,51,51,.94);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 5000;
+      box-shadow: 0 10px 26px rgba(0,0,0,.18);
+    }
+
+    .share-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* Newsletter */
@@ -1014,9 +1061,9 @@
     .product-modal-actions {
       margin-top: 12px; /* just below description */
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
-      align-items: center;
+      align-items: flex-start;
     }
 
     .product-modal-add-btn {
@@ -1043,6 +1090,27 @@
     .product-modal-add-btn:active {
       transform: translateY(0);
       box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    }
+
+    .product-modal-share-btn {
+      border: 1px solid rgba(234,194,202,.95);
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #fff;
+      color: var(--rosa-principal);
+      box-shadow: 0 8px 18px rgba(0,0,0,.10);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    .product-modal-share-btn:hover {
+      background: #fff7fb;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,.14);
     }
 
     .product-modal-note {
@@ -1201,6 +1269,7 @@
           <p class="product-modal-description" id="productModalDescription"></p>
           <div class="product-modal-actions">
             <button class="product-modal-add-btn" id="productModalAddBtn">Add to cart</button>
+            <button class="product-modal-share-btn" id="productModalShareBtn" type="button">Share product</button>
           </div>
         </div>
       </div>
@@ -1275,8 +1344,71 @@
       const productModalPrice = document.getElementById('productModalPrice');
       const productModalDescription = document.getElementById('productModalDescription');
       const productModalAddBtn = document.getElementById('productModalAddBtn');
+      const productModalShareBtn = document.getElementById('productModalShareBtn');
 
       let currentModalProduct = null;
+
+
+      function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function(ch) {
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]);
+        });
+      }
+
+      function getProductId(product) {
+        return String(product && (product.id || product.ID || product.sku || product.slug || product.title) || '');
+      }
+
+      function getProductShareUrl(product) {
+        const id = getProductId(product);
+        const url = new URL('index.html', window.location.href);
+        url.search = '';
+        if (id) url.searchParams.set('product', id);
+        return url.href;
+      }
+
+      function showShareToast(message) {
+        let toast = document.getElementById('shareToast');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.id = 'shareToast';
+          toast.className = 'share-toast';
+          document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(window.__faellaShareToastTimer);
+        window.__faellaShareToastTimer = setTimeout(function(){
+          toast.classList.remove('show');
+        }, 2200);
+      }
+
+      async function shareProduct(product, button) {
+        if (!product) return;
+        const url = getProductShareUrl(product);
+        const title = product.title || 'Faella Crafts product';
+        const text = 'Have a look at this Faella Crafts product: ' + title;
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: title, text: text, url: url });
+            return;
+          }
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(url);
+          showShareToast('Link copied!');
+          if (button) {
+            const oldText = button.textContent;
+            button.textContent = 'LINK COPIED';
+            setTimeout(function(){ button.textContent = oldText; }, 1600);
+          }
+        } catch (err) {
+          window.prompt('Copy product link:', url);
+        }
+      }
 
       function getProductMainImage(product) {
         const gallery = Array.isArray(product.gallery)
@@ -1294,7 +1426,7 @@
         currentModalProduct = product;
 
         const resolved = getProductMainImage(product);
-        const safeTitle = (product.title || '').replace(/"/g, '&quot;');
+        const safeTitle = escapeHTML(product.title || '');
 
         productModalMainImage.src = resolved.main;
         productModalMainImage.alt = safeTitle;
@@ -1328,7 +1460,7 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'product-modal-thumb';
-            btn.innerHTML = '<img src="' + url + '" alt="' + safeTitle + '">';
+            btn.innerHTML = '<img src="' + escapeHTML(url) + '" alt="' + safeTitle + '">';
             btn.addEventListener('click', function () {
               productModalMainImage.src = url;
             });
@@ -1389,6 +1521,14 @@
 
 
       var CATEGORY_FILTER = 'Promotions';
+
+      if (productModalShareBtn) {
+        productModalShareBtn.addEventListener('click', function () {
+          if (!currentModalProduct) return;
+          shareProduct(currentModalProduct, productModalShareBtn);
+        });
+      }
+
 
       function formatPrice(value) {
         const num = Number(value || 0);
@@ -1481,14 +1621,14 @@ if (ordersBtn) {
         }
 
         var html = cartState.items.map(function(item, index) {
-          var safeTitle = (item.title || '').replace(/"/g, '&quot;');
+          var safeTitle = escapeHTML(item.title || '');
           return [
             '<div class="cart-item">',
               '<div class="cart-item-image">',
-                '<img src="' + (item.image || '') + '" alt="' + safeTitle + '">',
+                '<img src="' + escapeHTML(item.image || '') + '" alt="' + safeTitle + '">',
               '</div>',
               '<div>',
-                '<div class="cart-item-title">' + (item.title || '') + '</div>',
+                '<div class="cart-item-title">' + safeTitle + '</div>',
                 '<div class="cart-item-price">' + formatPrice(item.price) + '</div>',
               '</div>',
               '<div class="cart-item-qty">',
@@ -1602,6 +1742,7 @@ if (ordersBtn) {
         grid.innerHTML = '';
 
         var sorted = (products || []).slice().sort(function(a,b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+        const modalProductsById = {};
 
         sorted
           .filter(function(p) { return !p.status || p.status === 'published'; })
@@ -1619,20 +1760,26 @@ if (ordersBtn) {
             const rawPrice = p.price || p.priceValue || 0;
             const priceText = formatPrice(rawPrice);
             const description = p.description || '';
+            const safeImageUrl = escapeHTML(imageUrl);
+            const safeTitle = escapeHTML(title);
+            const safeCategory = escapeHTML(category);
+            const safeBrand = escapeHTML(brand);
+            const productId = getProductId(p) || title;
 
             article.innerHTML = [
               '<div class="product-image">',
-                '<img src="' + imageUrl + '" alt="' + title.replace(/"/g, '&quot;') + '">',
+                '<img src="' + safeImageUrl + '" alt="' + safeTitle + '" loading="lazy" decoding="async">',
               '</div>',
               '<div class="product-body">',
-                '<span class="product-badge">' + category + '</span>',
-                '<h3 class="product-name">' + title + '</h3>',
-                '<span class="product-brand">' + brand + '</span>',
+                '<span class="product-badge">' + safeCategory + '</span>',
+                '<h3 class="product-name">' + safeTitle + '</h3>',
+                '<span class="product-brand">' + safeBrand + '</span>',
                 '<p class="product-price">' + priceText + ' <span></span></p>',
                 '',
               '</div>',
               '<div class="product-footer">',
-                '<button class="btn-buy">ADD TO CART</button>',
+                '<button class="btn-buy" type="button">ADD TO CART</button>',
+                '<button class="btn-share" type="button">🔗 SHARE</button>',
               '</div>'
             ].join('');
 
@@ -1655,11 +1802,20 @@ if (ordersBtn) {
             const clickableTitle = article.querySelector('.product-name');
 
             const modalProduct = Object.assign({}, p, {
+              id: productId,
               image: imageUrl,
               price: rawPrice,
               category: category,
               description: description
             });
+            modalProductsById[String(productId)] = modalProduct;
+
+            const shareBtn = article.querySelector('.btn-share');
+            if (shareBtn) {
+              shareBtn.addEventListener('click', function () {
+                shareProduct(modalProduct, shareBtn);
+              });
+            }
 
             function attachModalHandler(el) {
               if (!el) return;
@@ -1672,6 +1828,12 @@ if (ordersBtn) {
             attachModalHandler(clickableImage);
             attachModalHandler(clickableTitle);
           });
+
+        const requestedProductId = new URLSearchParams(window.location.search).get('product');
+        if (requestedProductId && !window.__faellaOpenedSharedProduct && modalProductsById[String(requestedProductId)]) {
+          window.__faellaOpenedSharedProduct = true;
+          setTimeout(function(){ openProductModal(modalProductsById[String(requestedProductId)]); }, 250);
+        }
 
         if (!grid.children.length) {
           grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px 0;">No products found.</p>';
@@ -1737,6 +1899,7 @@ const urls = [
 
       function applyHero(data) {
         if (!data) return;
+        data = data.hero || data;
         try {
           Object.keys(heroMap).forEach(function(key) {
             var selector = heroMap[key];

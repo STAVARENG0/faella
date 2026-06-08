@@ -79,6 +79,20 @@ h1 span{
   color:var(--olive);
   margin-top:12px;
 }
+.paypal-order-note{
+  margin-top:12px;
+  text-align:left;
+  background:#fff7fb;
+  border:1px solid rgba(216,122,152,.20);
+  color:var(--muted);
+  border-radius:14px;
+  padding:12px 14px;
+  font-size:13px;
+  line-height:1.45;
+}
+.paypal-order-note strong{
+  color:var(--olive);
+}
 .items{
   text-align:left;
   margin:12px 0 8px;
@@ -266,6 +280,8 @@ footer{
     </div>
   </div>
 
+  <div class="paypal-order-note" id="paypalOrderNote"></div>
+
   <div id="paypal-section">
     <div id="paypal-button-paypal"></div>
     <div id="paypal-button-card"></div>
@@ -297,6 +313,21 @@ function readCartFromQuery(){
 document.getElementById('year').textContent = new Date().getFullYear();
 
 function fmtEUR(n){ return '€ ' + Number(n).toFixed(2); }
+function escapeHTML(value){
+  return String(value ?? '').replace(/[&<>"']/g, function(ch){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]);
+  });
+}
+function toCents(value){
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100);
+}
+function centsToPaypal(cents){
+  return (Math.max(0, Number(cents || 0)) / 100).toFixed(2);
+}
+function paypalText(value, max){
+  const clean = String(value || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return clean.slice(0, max || 127) || 'Faella Crafts product';
+}
 function readJSON(key){
   try{
     return JSON.parse(localStorage.getItem(key));
@@ -334,10 +365,11 @@ function computeShipping(fulfilment){
 // Normalize product fields (title/price/qty) for different cart formats
 function normalizeCart(arr){
   return arr.map(item=>{
-    const qty = Number(item.qty ?? item.quantity ?? 1) || 0;
+    const qty = Math.max(0, parseInt(item.qty ?? item.quantity ?? 1, 10) || 0);
     const price = Number(item.price ?? item.unitPrice ?? 0) || 0;
     const title = item.title ?? item.name ?? item.product?.title ?? 'Product';
-    return { qty, price, title };
+    const id = item.id ?? item.sku ?? item.slug ?? title;
+    return { id, qty, price, title };
   }).filter(x => x.qty > 0 && x.price >= 0);
 }
 
@@ -377,40 +409,60 @@ function initFulfilmentUI(){
 
 function renderSummary(){
   const list = document.getElementById('cartList');
-  let subtotal = 0;
+  const note = document.getElementById('paypalOrderNote');
+  let subtotalCents = 0;
   if(!cart.length){
     list.innerHTML = '<p style="color:#6f6f6f;text-align:center;">Your cart is empty.</p>';
   }else{
     list.innerHTML = cart.map(item=>{
-      const sub = item.qty * item.price; subtotal += sub;
+      const unitCents = toCents(item.price);
+      const subCents = unitCents * item.qty;
+      subtotalCents += subCents;
       return `<div class="item">
-                <div class="item-title">${item.qty}× ${item.title}</div>
-                <div class="item-sub">${fmtEUR(sub)}</div>
+                <div class="item-title">${item.qty}× ${escapeHTML(item.title)}</div>
+                <div class="item-sub">${fmtEUR(subCents / 100)}</div>
               </div>`;
     }).join('');
   }
   const ship = computeShipping(fulfilment);
+  const shippingCents = toCents(ship.amount || 0);
+  const subtotal = subtotalCents / 100;
   document.getElementById('subtotalValue').textContent = fmtEUR(subtotal);
   document.getElementById('shippingLabel').textContent = ship.label || 'Shipping';
-  document.getElementById('shippingValue').textContent = fmtEUR(ship.amount || 0);
+  document.getElementById('shippingValue').textContent = fmtEUR(shippingCents / 100);
 
-  let effectiveTotal = 0;
+  let effectiveTotalCents = 0;
   const helper = document.getElementById('helperMsg');
   const payBtn = document.getElementById('paypal-button-paypal');
   const cardBtn = document.getElementById('paypal-button-card');
-  if(subtotal > 0){
-    effectiveTotal = subtotal + Number(ship.amount||0);
+  if(subtotalCents > 0){
+    effectiveTotalCents = subtotalCents + shippingCents;
     helper.classList.add('hidden');
     payBtn.classList.remove('hidden');
     cardBtn.classList.remove('hidden');
   }else{
-    effectiveTotal = 0;
+    effectiveTotalCents = 0;
     helper.classList.remove('hidden');
     payBtn.classList.add('hidden');
     cardBtn.classList.add('hidden');
   }
-  document.getElementById('totalAmount').textContent = effectiveTotal.toFixed(2);
-  return { subtotal, shipping: Number(ship.amount||0), total: effectiveTotal };
+
+  if(note){
+    const fulfilmentText = fulfilment === 'pickup'
+      ? 'Pickup selected — no shipping charged.'
+      : 'Delivery selected — shipping paid: €9.00.';
+    note.innerHTML = '<strong>PayPal order summary:</strong> product name, quantity, product subtotal and delivery/pickup status will be sent to PayPal.<br>' + escapeHTML(fulfilmentText);
+  }
+
+  document.getElementById('totalAmount').textContent = centsToPaypal(effectiveTotalCents);
+  return {
+    subtotal: subtotalCents / 100,
+    shipping: shippingCents / 100,
+    total: effectiveTotalCents / 100,
+    subtotalCents,
+    shippingCents,
+    totalCents: effectiveTotalCents
+  };
 }
 
 const state = renderSummary();
@@ -427,29 +479,40 @@ function commonConfig(){
       return actions.resolve();
     },
     createOrder: function(data, actions){
-      const { subtotal, shipping, total } = renderSummary();
-      if(subtotal <= 0){ throw new Error('Empty subtotal'); }
+      const totals = renderSummary();
+      if(totals.subtotalCents <= 0){ throw new Error('Empty subtotal'); }
 
-      const items = cart.map(item => ({
-        name: item.title,
-        unit_amount: { currency_code: 'EUR', value: item.price.toFixed(2) },
-        quantity: item.qty.toString(),
-        category: 'PHYSICAL_GOODS'
-      }));
+      const items = cart.map(item => {
+        const unitCents = toCents(item.price);
+        return {
+          name: paypalText(item.title, 127),
+          sku: paypalText(item.id || item.title, 127),
+          description: paypalText('Faella Crafts handmade product. Quantity: ' + item.qty, 127),
+          unit_amount: { currency_code: 'EUR', value: centsToPaypal(unitCents) },
+          quantity: String(item.qty),
+          category: 'PHYSICAL_GOODS'
+        };
+      });
 
       const shippingPref = (fulfilment === 'pickup') ? 'NO_SHIPPING' : 'GET_FROM_FILE';
+      const fulfilmentSummary = (fulfilment === 'pickup')
+        ? 'Pickup selected. Shipping not charged.'
+        : 'Delivery selected. Shipping paid: EUR 9.00.';
+      const itemSummary = cart.map(item => item.qty + 'x ' + item.title).join(' | ');
 
       return actions.order.create({
         intent: 'CAPTURE',
         application_context: { shipping_preference: shippingPref, user_action: 'PAY_NOW', locale: 'en-IE' },
         purchase_units:[{
-          description:'Faella Crafts Order',
+          reference_id: 'FAELLA-' + Date.now(),
+          description: paypalText('Faella Crafts Order. ' + fulfilmentSummary, 127),
+          custom_id: paypalText(fulfilmentSummary + ' ' + itemSummary, 127),
           amount:{
-            value: total.toFixed(2),
+            value: centsToPaypal(totals.totalCents),
             currency_code:'EUR',
             breakdown: {
-              item_total: { currency_code: 'EUR', value: subtotal.toFixed(2) },
-              shipping:   { currency_code: 'EUR', value: shipping.toFixed(2) }
+              item_total: { currency_code: 'EUR', value: centsToPaypal(totals.subtotalCents) },
+              shipping:   { currency_code: 'EUR', value: centsToPaypal(totals.shippingCents) }
             }
           },
           items: items
