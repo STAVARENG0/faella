@@ -7,13 +7,13 @@
     "cardTitle": "⭐ Featured Amigurumi",
     "cardSub": "Discover this week’s highlighted creation and find the perfect handmade gift.",
     "cardDate": "28/11/2026",
-    "cardImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1781612043/faella/hero/hero_card_1781612042699_ba9b72e6d96f.png",
-    "bgImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1781612612/faella/hero/hero_bg_1781612611905_67c27a06d8df.png",
-    "bgPositionX": 86,
-    "bgPositionY": 17,
-    "bgPosition": "86% 17%",
-    "cardImagePositionX": 82,
-    "cardImagePositionY": 74,
-    "cardImagePosition": "82% 74%"
+    "cardImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1781615291/faella/hero/hero_card_1781615290920_a6199c57becb.png",
+    "bgImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1781615294/faella/hero/hero_bg_1781615293938_a8f1e511e9e4.png",
+    "bgPositionX": 87,
+    "bgPositionY": 16,
+    "bgPosition": "87% 16%",
+    "cardImagePositionX": 100,
+    "cardImagePositionY": 0,
+    "cardImagePosition": "100% 0%"
   }
 }
