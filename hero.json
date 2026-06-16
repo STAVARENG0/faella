@@ -10,10 +10,10 @@
     "cardImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1781615291/faella/hero/hero_card_1781615290920_a6199c57becb.png",
     "bgImage": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1781615294/faella/hero/hero_bg_1781615293938_a8f1e511e9e4.png",
     "bgPositionX": 87,
-    "bgPositionY": 16,
-    "bgPosition": "87% 16%",
-    "cardImagePositionX": 100,
-    "cardImagePositionY": 0,
-    "cardImagePosition": "100% 0%"
+    "bgPositionY": 5,
+    "bgPosition": "87% 5%",
+    "cardImagePositionX": 74,
+    "cardImagePositionY": 2,
+    "cardImagePosition": "74% 2%"
   }
 }
