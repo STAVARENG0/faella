@@ -249,7 +249,7 @@ footer{
       <label class="opt" for="opt-delivery">
         <input type="radio" name="fulfilment" id="opt-delivery" value="delivery">
         <div>
-          <div class="label">Delivery <span class="badge">Shipping (€9)</span></div>
+          <div class="label">Delivery <span class="badge">Shipping €7 · Free from €50</span></div>
           <div class="sub">Estimated delivery time: 7 to 10 business days.</div>
         </div>
       </label>
@@ -296,6 +296,9 @@ footer{
 // ===== Keys used by the site =====
 const CART_KEYS_ORDER = ['cartItems'];
 const FULFILMENT_KEY = 'fulfilment_mode'; // 'delivery' | 'pickup'
+const CHECKOUT_API_BASE = (window.FAELLA_CHECKOUT_API_BASE || 'https://outstanding-patience-production-e001.up.railway.app').replace(/\/+$/, '');
+const SHIPPING_FEE_CENTS = 700;
+const FREE_SHIPPING_THRESHOLD_CENTS = 5000;
 
 function readCartFromQuery(){
   try{
@@ -324,10 +327,6 @@ function toCents(value){
 function centsToPaypal(cents){
   return (Math.max(0, Number(cents || 0)) / 100).toFixed(2);
 }
-function paypalText(value, max){
-  const clean = String(value || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
-  return clean.slice(0, max || 127) || 'Faella Crafts product';
-}
 function readJSON(key){
   try{
     return JSON.parse(localStorage.getItem(key));
@@ -354,15 +353,20 @@ function readFulfilment(){
   return 'delivery';
 }
 
-// Shipping: fixed by fulfilment selection. Delivery = €9; Pickup = €0
-function computeShipping(fulfilment){
+// Shipping shown on the page. The server recalculates this again before payment.
+// Delivery = €7. Delivery is free when products subtotal is €50 or more. Pickup = €0.
+function computeShipping(fulfilment, subtotalCents){
   if(fulfilment === 'pickup'){
-    return { amount: 0, label: 'Pickup (Free)' };
+    return { amountCents: 0, label: 'Pickup (Free)', freeShippingApplied: false };
   }
-  return { amount: 9, label: 'Shipping (€9)' };
+  if(Number(subtotalCents || 0) >= FREE_SHIPPING_THRESHOLD_CENTS){
+    return { amountCents: 0, label: 'Shipping (Free over €50)', freeShippingApplied: true };
+  }
+  return { amountCents: SHIPPING_FEE_CENTS, label: 'Shipping (€7)', freeShippingApplied: false };
 }
 
-// Normalize product fields (title/price/qty) for different cart formats
+// Normalize product fields (title/price/qty) for different cart formats.
+// The server ignores client prices and validates the real price from products.json.
 function normalizeCart(arr){
   return arr.map(item=>{
     const qty = Math.max(0, parseInt(item.qty ?? item.quantity ?? 1, 10) || 0);
@@ -373,8 +377,36 @@ function normalizeCart(arr){
   }).filter(x => x.qty > 0 && x.price >= 0);
 }
 
+function cartPayloadForServer(){
+  return cart.map(item => ({
+    id: item.id || item.title,
+    qty: item.qty
+  }));
+}
+
+async function postCheckout(path, payload){
+  const response = await fetch(CHECKOUT_API_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+  const data = await response.json().catch(() => ({}));
+  if(!response.ok || data.ok === false){
+    throw new Error(data.error || 'Server validation failed.');
+  }
+  return data;
+}
+
 let cart = normalizeCart(readCart());
 let fulfilment = readFulfilment();
+let lastCheckoutAlertAt = 0;
+let serverQuoteRequestId = 0;
+
+function showCheckoutAlert(message){
+  lastCheckoutAlertAt = Date.now();
+  alert(message);
+}
 
 // Initialize UI radios and info panel
 function initFulfilmentUI(){
@@ -388,7 +420,7 @@ function initFulfilmentUI(){
   function updateInfo(){
     info.textContent = (fulfilment === 'pickup')
       ? 'Pickup at: Centrepoint apartament Tuam roud H91 H308'
-      : 'Estimated delivery time: 7 to 10 business days.';
+      : 'Estimated delivery time: 7 to 10 business days. Shipping is €7 and free from €50 in products.';
   }
 
   radioDelivery.addEventListener('change', () => {
@@ -396,15 +428,45 @@ function initFulfilmentUI(){
     localStorage.setItem(FULFILMENT_KEY, fulfilment);
     updateInfo();
     renderSummary();
+    syncServerQuote();
   });
   radioPickup.addEventListener('change', () => {
     fulfilment = 'pickup';
     localStorage.setItem(FULFILMENT_KEY, fulfilment);
     updateInfo();
     renderSummary();
+    syncServerQuote();
   });
 
   updateInfo();
+}
+
+function fulfilmentMessage(totals){
+  const subtotalCents = Number(totals?.subtotalCents || 0);
+  const shippingCents = Number(totals?.shippingCents || 0);
+  if(fulfilment === 'pickup'){
+    return 'Pickup selected — no shipping charged.';
+  }
+  if(subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS && shippingCents === 0){
+    return 'Delivery selected — free shipping applied because products subtotal is €50.00 or more.';
+  }
+  return 'Delivery selected — shipping paid: €7.00. Free shipping starts from €50.00 in products.';
+}
+
+function setPaymentEnabled(enabled, message){
+  const helper = document.getElementById('helperMsg');
+  const payBtn = document.getElementById('paypal-button-paypal');
+  const cardBtn = document.getElementById('paypal-button-card');
+  if(enabled){
+    helper.classList.add('hidden');
+    payBtn.classList.remove('hidden');
+    cardBtn.classList.remove('hidden');
+  }else{
+    helper.textContent = message || 'Add products to your cart to enable payment.';
+    helper.classList.remove('hidden');
+    payBtn.classList.add('hidden');
+    cardBtn.classList.add('hidden');
+  }
 }
 
 function renderSummary(){
@@ -424,37 +486,28 @@ function renderSummary(){
               </div>`;
     }).join('');
   }
-  const ship = computeShipping(fulfilment);
-  const shippingCents = toCents(ship.amount || 0);
+
+  const ship = computeShipping(fulfilment, subtotalCents);
+  const shippingCents = Number(ship.amountCents || 0);
   const subtotal = subtotalCents / 100;
+  const effectiveTotalCents = subtotalCents > 0 ? subtotalCents + shippingCents : 0;
+
   document.getElementById('subtotalValue').textContent = fmtEUR(subtotal);
   document.getElementById('shippingLabel').textContent = ship.label || 'Shipping';
   document.getElementById('shippingValue').textContent = fmtEUR(shippingCents / 100);
+  document.getElementById('totalAmount').textContent = centsToPaypal(effectiveTotalCents);
 
-  let effectiveTotalCents = 0;
-  const helper = document.getElementById('helperMsg');
-  const payBtn = document.getElementById('paypal-button-paypal');
-  const cardBtn = document.getElementById('paypal-button-card');
   if(subtotalCents > 0){
-    effectiveTotalCents = subtotalCents + shippingCents;
-    helper.classList.add('hidden');
-    payBtn.classList.remove('hidden');
-    cardBtn.classList.remove('hidden');
+    setPaymentEnabled(true);
   }else{
-    effectiveTotalCents = 0;
-    helper.classList.remove('hidden');
-    payBtn.classList.add('hidden');
-    cardBtn.classList.add('hidden');
+    setPaymentEnabled(false);
   }
 
   if(note){
-    const fulfilmentText = fulfilment === 'pickup'
-      ? 'Pickup selected — no shipping charged.'
-      : 'Delivery selected — shipping paid: €9.00.';
-    note.innerHTML = '<strong>PayPal order summary:</strong> product name, quantity, product subtotal and delivery/pickup status will be sent to PayPal.<br>' + escapeHTML(fulfilmentText);
+    const totals = { subtotalCents, shippingCents, totalCents: effectiveTotalCents };
+    note.innerHTML = '<strong>Secure checkout:</strong> product prices, shipping and total are validated by the server before PayPal payment.<br>' + escapeHTML(fulfilmentMessage(totals));
   }
 
-  document.getElementById('totalAmount').textContent = centsToPaypal(effectiveTotalCents);
   return {
     subtotal: subtotalCents / 100,
     shipping: shippingCents / 100,
@@ -465,83 +518,123 @@ function renderSummary(){
   };
 }
 
+function applyServerTotals(totals){
+  if(!totals) return;
+  const list = document.getElementById('cartList');
+  const note = document.getElementById('paypalOrderNote');
+
+  if(Array.isArray(totals.items) && totals.items.length){
+    list.innerHTML = totals.items.map(item => {
+      const qty = Number(item.qty || 0);
+      const subtotalCents = Number(item.subtotalCents || 0);
+      return `<div class="item">
+                <div class="item-title">${qty}× ${escapeHTML(item.title || 'Product')}</div>
+                <div class="item-sub">${fmtEUR(subtotalCents / 100)}</div>
+              </div>`;
+    }).join('');
+  }
+
+  document.getElementById('subtotalValue').textContent = fmtEUR(Number(totals.subtotalCents || 0) / 100);
+  document.getElementById('shippingLabel').textContent = totals.shippingLabel || 'Shipping';
+  document.getElementById('shippingValue').textContent = fmtEUR(Number(totals.shippingCents || 0) / 100);
+  document.getElementById('totalAmount').textContent = centsToPaypal(Number(totals.totalCents || 0));
+
+  if(Number(totals.totalCents || 0) > 0){
+    setPaymentEnabled(true);
+  }
+
+  if(note){
+    note.innerHTML = '<strong>Server validated summary:</strong> product prices, shipping and total confirmed securely before payment.<br>' + escapeHTML(fulfilmentMessage(totals));
+  }
+}
+
+async function syncServerQuote(){
+  if(!cart.length) return;
+  const requestId = ++serverQuoteRequestId;
+  try{
+    const data = await postCheckout('/api/checkout/quote', {
+      fulfilment,
+      cart: cartPayloadForServer()
+    });
+    if(requestId !== serverQuoteRequestId) return;
+    applyServerTotals(data.totals);
+  }catch(err){
+    console.warn('Server quote failed:', err);
+    if(requestId !== serverQuoteRequestId) return;
+    setPaymentEnabled(false, 'Server validation failed. Please refresh the cart and try again.');
+    const note = document.getElementById('paypalOrderNote');
+    if(note){
+      note.innerHTML = '<strong>Server validation failed:</strong> ' + escapeHTML(err.message || 'Please refresh the cart and try again.');
+    }
+  }
+}
+
 const state = renderSummary();
 initFulfilmentUI();
+syncServerQuote();
+
+function clearCartAfterPayment(details){
+  alert('✅ Payment completed by ' + (details?.payer?.name?.given_name || 'customer') + '!');
+  CART_KEYS_ORDER.forEach(k=>localStorage.removeItem(k));
+  localStorage.removeItem(FULFILMENT_KEY);
+  cart = [];
+  document.getElementById('cartList').innerHTML = '<p style="color:var(--olive);text-align:center;">Payment Approved!</p>';
+  document.getElementById('subtotalValue').textContent = fmtEUR(0);
+  document.getElementById('shippingLabel').textContent = 'Shipping';
+  document.getElementById('shippingValue').textContent = fmtEUR(0);
+  document.getElementById('totalAmount').textContent = '0.00';
+  setPaymentEnabled(false, 'Payment approved. Your cart is now empty.');
+}
 
 function commonConfig(){
   return {
     onClick: function(data, actions){
-      const { subtotal } = renderSummary();
-      if(subtotal <= 0){
+      renderSummary();
+      if(!cart.length){
         alert('Please add products before paying.');
         return actions.reject();
       }
       return actions.resolve();
     },
-    createOrder: function(data, actions){
-      const totals = renderSummary();
-      if(totals.subtotalCents <= 0){ throw new Error('Empty subtotal'); }
+    createOrder: function(){
+      renderSummary();
+      if(!cart.length){ throw new Error('Empty cart'); }
 
-      const items = cart.map(item => {
-        const unitCents = toCents(item.price);
-        return {
-          name: paypalText(item.title, 127),
-          sku: paypalText(item.id || item.title, 127),
-          description: paypalText('Faella Crafts handmade product. Quantity: ' + item.qty, 127),
-          unit_amount: { currency_code: 'EUR', value: centsToPaypal(unitCents) },
-          quantity: String(item.qty),
-          category: 'PHYSICAL_GOODS'
-        };
-      });
-
-      const shippingPref = (fulfilment === 'pickup') ? 'NO_SHIPPING' : 'GET_FROM_FILE';
-      const fulfilmentSummary = (fulfilment === 'pickup')
-        ? 'Pickup selected. Shipping not charged.'
-        : 'Delivery selected. Shipping paid: EUR 9.00.';
-      const itemSummary = cart.map(item => item.qty + 'x ' + item.title).join(' | ');
-
-      return actions.order.create({
-        intent: 'CAPTURE',
-        application_context: { shipping_preference: shippingPref, user_action: 'PAY_NOW', locale: 'en-IE' },
-        purchase_units:[{
-          reference_id: 'FAELLA-' + Date.now(),
-          description: paypalText('Faella Crafts Order. ' + fulfilmentSummary, 127),
-          custom_id: paypalText(fulfilmentSummary + ' ' + itemSummary, 127),
-          amount:{
-            value: centsToPaypal(totals.totalCents),
-            currency_code:'EUR',
-            breakdown: {
-              item_total: { currency_code: 'EUR', value: centsToPaypal(totals.subtotalCents) },
-              shipping:   { currency_code: 'EUR', value: centsToPaypal(totals.shippingCents) }
-            }
-          },
-          items: items
-        }]
+      return postCheckout('/api/paypal/create-order', {
+        fulfilment,
+        cart: cartPayloadForServer()
+      }).then(function(data){
+        if(data.totals) applyServerTotals(data.totals);
+        if(!data.id){ throw new Error('PayPal order was not created by the server.'); }
+        return data.id;
+      }).catch(function(err){
+        console.error('Server PayPal create-order failed:', err);
+        showCheckoutAlert('❌ Could not validate your cart on the server. Please refresh and try again.');
+        throw err;
       });
     },
-    onApprove: function(data, actions){
-      return actions.order.capture().then(function(details){
-        alert('✅ Payment completed by ' + (details?.payer?.name?.given_name || 'customer') + '!');
-        // clear cart + fulfilment
-        CART_KEYS_ORDER.forEach(k=>localStorage.removeItem(k));
-        localStorage.removeItem(FULFILMENT_KEY);
-        document.getElementById('cartList').innerHTML = '<p style="color:var(--olive);text-align:center;">Payment Approved!</p>';
-        document.getElementById('subtotalValue').textContent = fmtEUR(0);
-        document.getElementById('shippingValue').textContent = fmtEUR(0);
-        document.getElementById('totalAmount').textContent = '0.00';
-        document.getElementById('paypal-button-paypal').classList.add('hidden');
-        document.getElementById('paypal-button-card').classList.add('hidden');
+    onApprove: function(data){
+      return postCheckout('/api/paypal/capture-order', {
+        orderId: data.orderID
+      }).then(function(result){
+        clearCartAfterPayment(result.capture || {});
+      }).catch(function(err){
+        console.error('Server PayPal capture failed:', err);
+        showCheckoutAlert('❌ Payment could not be confirmed by the server. Please contact Faella Crafts before trying again.');
+        throw err;
       });
     },
     onError: function(err){
       console.error('PayPal error:', err);
-      alert('❌ There was an issue with PayPal Checkout. Please try again.');
+      if(Date.now() - lastCheckoutAlertAt > 1500){
+        alert('❌ There was an issue with PayPal Checkout. Please try again.');
+      }
     }
   };
 }
 
-// Render PayPal buttons when subtotal > 0
-if(typeof paypal !== 'undefined' && state.subtotal > 0){
+// Render PayPal buttons when cart has products
+if(typeof paypal !== 'undefined' && cart.length > 0){
   const btnPayPal = paypal.Buttons(Object.assign({}, commonConfig(), {
     fundingSource: paypal.FUNDING.PAYPAL,
     style:{ layout:'vertical', color:'gold', shape:'pill', label:'paypal', height:45 }

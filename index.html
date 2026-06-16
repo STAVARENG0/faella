@@ -556,10 +556,26 @@
     .hero-card {
       background: #fff;
       color: var(--rosa-principal);
-      padding: 30px 40px;
+      padding: 24px 32px 28px;
       border-radius: 30px;
       box-shadow: 0 18px 40px rgba(0,0,0,0.15);
       text-align: center;
+      width: min(630px, 100%);
+      overflow: hidden;
+    }
+
+    .hero-card-image {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 22px;
+      display: block;
+      margin: 0 auto 18px;
+      background: var(--rosa-claro);
+    }
+
+    .hero-card-image[hidden] {
+      display: none !important;
     }
 
     .hero-card-title {
@@ -1203,6 +1219,14 @@
       .hero-right {
         order: -1;
       }
+
+      .hero-card {
+        padding: 22px 20px 24px;
+      }
+
+      .hero-card-image {
+        max-height: 180px;
+      }
     }
   </style>
 </head>
@@ -1338,6 +1362,7 @@
 
       <div class="hero-right">
         <div class="hero-card">
+          <img class="hero-card-image" src="" alt="Featured amigurumi" loading="lazy" hidden>
           <div class="hero-card-title">Pink Friday</div>
           <div class="hero-card-sub">Unmissable offers across the shop</div>
           <div class="hero-card-date">Until 28/11</div>
@@ -1959,6 +1984,21 @@ const urls = [
               el.textContent = data[key];
             }
           });
+
+          var cardImageEl = document.querySelector('.hero-card-image');
+          if (cardImageEl) {
+            var heroCard = cardImageEl.closest ? cardImageEl.closest('.hero-card') : null;
+            if (data.cardImage) {
+              cardImageEl.src = data.cardImage;
+              cardImageEl.alt = data.cardImageAlt || data.cardTitle || 'Featured amigurumi';
+              cardImageEl.hidden = false;
+              if (heroCard) heroCard.classList.add('has-image');
+            } else {
+              cardImageEl.removeAttribute('src');
+              cardImageEl.hidden = true;
+              if (heroCard) heroCard.classList.remove('has-image');
+            }
+          }
 
           var headerEl = document.querySelector('header');
           if (headerEl) {
