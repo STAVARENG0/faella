@@ -201,5 +201,20 @@
     ],
     "createdAt": 1780909905719,
     "status": "published"
+  },
+  {
+    "id": "1788994055233",
+    "title": "Holy Family",
+    "price": 160,
+    "description": "Holy Family – Handmade Amigurumi A unique and special piece, entirely hand-crocheted, depicting the Holy Family: Mary, Joseph, and Baby Jesus. Each figure has been carefully crafted in the amigurumi style, featuring delicate details on the clothing, gold accents, and gentle expressions that bring the piece to life. Baby Jesus is shown in Joseph's arms, accompanied by Mary, creating a composition filled with meaning and tenderness. Perfect for Christmas decor, a nativity scene, religious displays, or as a gift for someone special, this piece embodies the charm of handcrafted artistry and offers a loving portrayal of the birth of Jesus. ✨ Handmade with love and attention to every detail. 🧶 A unique, handcrafted piece. 🎁 A special keepsake to cherish for years to come. Material: Cotton yarn, stuffing, and handcrafted details. Production: Handmade. Contents: Mary, Joseph, and Baby Jesus.",
+    "category": "Weekly highlight",
+    "stock": 2,
+    "image": "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1788994056/faella/products/1788994055233_1788994055793_8dbeab5978d9.png",
+    "gallery": [
+      "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1788994058/faella/products/1788994055233_1788994057741_69aaa54b7c2f.png",
+      "https://res.cloudinary.com/dlskyrrak/image/upload/f_auto,q_auto:good/v1788994060/faella/products/1788994055233_1788994059474_2b107b363aa1.png"
+    ],
+    "createdAt": 1788994060663,
+    "status": "published"
   }
 ]
