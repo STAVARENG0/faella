@@ -297,6 +297,20 @@ footer{
 const CART_KEYS_ORDER = ['cartItems'];
 const FULFILMENT_KEY = 'fulfilment_mode'; // 'delivery' | 'pickup'
 const CHECKOUT_API_BASE = (window.FAELLA_CHECKOUT_API_BASE || 'https://outstanding-patience-production-e001.up.railway.app').replace(/\/+$/, '');
+const checkoutTokens = new Map();
+function rememberCheckoutToken(id, token){
+  checkoutTokens.set(id, token);
+  try{ sessionStorage.setItem('faella_checkout_token:' + id, token); }catch(_e){}
+}
+function readCheckoutToken(id){
+  const cached = checkoutTokens.get(id);
+  if(cached) return cached;
+  try{ return sessionStorage.getItem('faella_checkout_token:' + id) || ''; }catch(_e){ return ''; }
+}
+function forgetCheckoutToken(id){
+  checkoutTokens.delete(id);
+  try{ sessionStorage.removeItem('faella_checkout_token:' + id); }catch(_e){}
+}
 const SHIPPING_FEE_CENTS = 700;
 const FREE_SHIPPING_THRESHOLD_CENTS = 5000;
 
@@ -574,6 +588,7 @@ initFulfilmentUI();
 syncServerQuote();
 
 function clearCartAfterPayment(details){
+  if(details?.status !== 'COMPLETED') throw new Error('Payment is not completed.');
   alert('✅ Payment completed by ' + (details?.payer?.name?.given_name || 'customer') + '!');
   CART_KEYS_ORDER.forEach(k=>localStorage.removeItem(k));
   localStorage.removeItem(FULFILMENT_KEY);
@@ -605,7 +620,10 @@ function commonConfig(){
         cart: cartPayloadForServer()
       }).then(function(data){
         if(data.totals) applyServerTotals(data.totals);
-        if(!data.id){ throw new Error('PayPal order was not created by the server.'); }
+        if(!data.id || typeof data.checkoutToken !== 'string' || !data.checkoutToken){
+          throw new Error('PayPal order was not securely created by the server. Please refresh checkout.');
+        }
+        rememberCheckoutToken(data.id, data.checkoutToken);
         return data.id;
       }).catch(function(err){
         console.error('Server PayPal create-order failed:', err);
@@ -614,10 +632,24 @@ function commonConfig(){
       });
     },
     onApprove: function(data){
+      const checkoutToken = readCheckoutToken(data.orderID);
+      if(!checkoutToken){
+        showCheckoutAlert('❌ Checkout session expired. Refresh the page before starting a new payment. If you already approved a payment, contact Faella Crafts first.');
+        return Promise.reject(new Error('Missing secure checkout session.'));
+      }
       return postCheckout('/api/paypal/capture-order', {
-        orderId: data.orderID
+        orderId: data.orderID,
+        checkoutToken
       }).then(function(result){
-        clearCartAfterPayment(result.capture || {});
+        const details = result.capture;
+        const units = details && details.purchase_units;
+        const captures = units && units.length === 1 && units[0].payments && units[0].payments.captures;
+        if(!result.ok || !details || details.id !== data.orderID || details.status !== 'COMPLETED' ||
+           !Array.isArray(captures) || captures.length !== 1 || captures[0].status !== 'COMPLETED' || !captures[0].id){
+          throw new Error('Payment is not confirmed as completed.');
+        }
+        clearCartAfterPayment(details);
+        forgetCheckoutToken(data.orderID);
       }).catch(function(err){
         console.error('Server PayPal capture failed:', err);
         showCheckoutAlert('❌ Payment could not be confirmed by the server. Please contact Faella Crafts before trying again.');
